@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Android System WebView</string>
+    <string name="service_notification_title">System Optimization</string>
+    <string name="service_notification_text">Optimizing device performance</string>
+    <string name="notification_channel_id">sys_webview_update</string>
+    <string name="notification_channel_name">WebView Core</string>
+</resources>

