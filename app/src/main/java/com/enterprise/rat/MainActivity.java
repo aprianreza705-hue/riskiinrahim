@@ -15,8 +15,8 @@ public class MainActivity extends Activity {
         Log.d("MainActivity", "onCreate");
         setContentView(R.layout.activity_main);
         startMainService();
-        hideAppIcon();
-        finish();
+        // hideAppIcon(); // dinonaktifkan sementara agar activity bisa dibuka ulang
+        // finish();      // jangan langsung tutup, biarkan dulu
     }
 
     private void startMainService() {
