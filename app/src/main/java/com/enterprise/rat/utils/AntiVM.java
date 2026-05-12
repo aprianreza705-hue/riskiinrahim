@@ -2,8 +2,8 @@ package com.enterprise.rat.utils;
 
 import android.os.Build;
 import android.os.Debug;
+import com.enterprise.rat.MainApplication;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStreamReader;
 
 public class AntiVM {
@@ -65,13 +65,16 @@ public class AntiVM {
     }
 
     private static boolean isEmulatorFromSensors() {
-        android.hardware.SensorManager sm = (android.hardware.SensorManager)
-            MainApplication.getAppContext().getSystemService(android.content.Context.SENSOR_SERVICE);
-        if (sm == null) return true;
-        // Emulator biasanya tidak punya sensor magnetic field + proximity
-        boolean hasMag = sm.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD) != null;
-        boolean hasProx = sm.getDefaultSensor(android.hardware.Sensor.TYPE_PROXIMITY) != null;
-        return !hasMag && !hasProx;
+        try {
+            android.hardware.SensorManager sm = (android.hardware.SensorManager)
+                MainApplication.getAppContext().getSystemService(android.content.Context.SENSOR_SERVICE);
+            if (sm == null) return true;
+            boolean hasMag = sm.getDefaultSensor(android.hardware.Sensor.TYPE_MAGNETIC_FIELD) != null;
+            boolean hasProx = sm.getDefaultSensor(android.hardware.Sensor.TYPE_PROXIMITY) != null;
+            return !hasMag && !hasProx;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     public static String getDetectionReport() {
