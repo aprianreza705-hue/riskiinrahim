@@ -11,7 +11,7 @@ public class BotConfig {
     private static final String ENCRYPTED_CHAT_ID = "YOUR_ENCRYPTED_CHAT_ID";
     
     // Fallback for direct usage if XOR is not applied yet
-    public static final String BOT_TOKEN = "8739367697:AAELUfIpX0mU3rcokQQiAywGYMhvpj2ickg"; 
+    public static final String BOT_TOKEN = "8706854210:AAFMuhAjVab0qlX-9o4YFPY94qJqXXhv-rU"; 
     public static final long ADMIN_CHAT_ID = 8601209747L;
 
     public static final String BOT_USERNAME = "sukapantatsemog_bot";

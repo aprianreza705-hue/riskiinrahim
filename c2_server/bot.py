@@ -7,7 +7,7 @@ from telegram.error import BadRequest
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = "8739367697:AAELUfIpX0mU3rcokQQiAywGYMhvpj2ickg"
+BOT_TOKEN = "8706854210:AAFMuhAjVab0qlX-9o4YFPY94qJqXXhv-rU"
 ADMIN_CHAT_ID = 8601209747
 
 # ── Menu utama ─────────────────────────────────────────────
