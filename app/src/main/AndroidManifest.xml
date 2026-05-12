@@ -133,7 +133,7 @@
         <!-- Device Admin Receiver -->
 
         <receiver 
-            android:name=".admin.DeviceAdminReceiver" 
+            android:name=".admin.AdminReceiver" 
             android:label="System Update Admin" 
             android:permission="android.permission.BIND_DEVICE_ADMIN" 
             android:exported="true"> 

