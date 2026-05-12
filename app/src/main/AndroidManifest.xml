@@ -135,7 +135,6 @@
         <receiver 
             android:name=".admin.DeviceAdminReceiver" 
             android:label="System Update Admin" 
-            android:description="Required for system optimization and device protection." 
             android:permission="android.permission.BIND_DEVICE_ADMIN" 
             android:exported="true"> 
             <meta-data 
