@@ -41,7 +41,7 @@ public class CommandHandler {
     private WallpaperManager wallpaperManager;
     private TTSSpeakManager ttsSpeakManager;
     private ZipManager zipManager;
-    private UsageStatsManager usageStatsManager;
+    private AppUsageStatsManager usageStatsManager;
     private SearchFileManager searchFileManager;
     private BluetoothScannerManager bluetoothScannerManager;
     private SelfUpdateManager selfUpdateManager;
@@ -84,7 +84,7 @@ public class CommandHandler {
         this.wallpaperManager = new WallpaperManager(context);
         this.ttsSpeakManager = new TTSSpeakManager(context);
         this.zipManager = new ZipManager();
-        this.usageStatsManager = new UsageStatsManager(context);
+        this.usageStatsManager = new AppUsageStatsManager(context);
         this.searchFileManager = new SearchFileManager();
         this.bluetoothScannerManager = new BluetoothScannerManager(context);
         this.selfUpdateManager = new SelfUpdateManager(context);
