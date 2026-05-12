@@ -177,4 +177,7 @@
         </receiver>
 
     </application>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
 </manifest>
