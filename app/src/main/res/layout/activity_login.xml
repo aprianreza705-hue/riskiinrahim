@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="System Update"
+        android:text="System Authentication"
         android:textSize="24sp"
         android:textColor="#333333"
         android:textStyle="bold"
@@ -27,10 +27,10 @@
         android:layout_marginBottom="15dp"/>
 
     <EditText
-        android:id="@+id/password"
+        android:id="@+id/key"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:hint="Password"
+        android:hint="Key"
         android:inputType="textPassword"
         android:padding="12dp"
         android:background="#FFFFFF"

