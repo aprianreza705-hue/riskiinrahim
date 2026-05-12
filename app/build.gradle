@@ -7,7 +7,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.android.system.webview.core"
+        applicationId "com.enterprise.rat"
         minSdk 24
         targetSdk 34
         versionCode 3
