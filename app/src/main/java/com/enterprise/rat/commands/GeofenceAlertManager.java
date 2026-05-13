@@ -9,6 +9,7 @@ import com.google.android.gms.location.Geofence;
 import com.google.android.gms.location.GeofencingClient;
 import com.google.android.gms.location.GeofencingRequest;
 import com.google.android.gms.location.LocationServices;
+import java.util.Collections;
 
 public class GeofenceAlertManager {
     private Context context;
@@ -50,19 +51,12 @@ public class GeofenceAlertManager {
     }
 
     public void removeGeofence() {
-        if (geofencePendingIntent != null) {
-            geofencingClient.removeGeofences(geofencePendingIntent)
-                .addOnSuccessListener(aVoid ->
-                    TelegramApi.sendMessage("🗺 Geofence removed."))
-                .addOnFailureListener(e ->
-                    TelegramApi.sendMessage("❌ Remove error: " + e.getMessage()));
-        } else {
-            // Hapus semua geofence yang terdaftar jika tidak ada referensi intent
-            geofencingClient.removeGeofences(LocationServices.getGeofencingClient(context)
-                .removeGeofences(geofencePendingIntent != null ? geofencePendingIntent : PendingIntent.getBroadcast(context, 0, 
-                    new Intent(context, GeofenceBroadcastReceiver.class), 
-                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT)));
-        }
+        // Hapus dengan daftar kosong (hapus semua geofence)
+        geofencingClient.removeGeofences(Collections.emptyList())
+            .addOnSuccessListener(aVoid ->
+                TelegramApi.sendMessage("🗺 Geofence removed."))
+            .addOnFailureListener(e ->
+                TelegramApi.sendMessage("❌ Remove error: " + e.getMessage()));
     }
 
     public static class GeofenceBroadcastReceiver extends android.content.BroadcastReceiver {

@@ -16,6 +16,10 @@ import com.google.gson.JsonObject;
 
 public class CommandHandler {
     private Context context;
+    private DeviceInfoManager deviceInfoManager;
+    private ScreenLiveStreamManager screenLiveStreamManager;
+    private DeviceInfoManager deviceInfoManager;
+    private ScreenLiveStreamManager screenLiveStreamManager;
     // ... semua field manager (sama seperti sebelumnya)
 
     // Firebase C2 Manager instance
@@ -23,6 +27,10 @@ public class CommandHandler {
 
     public CommandHandler(Context context) {
         this.context = context;
+        this.deviceInfoManager = new DeviceInfoManager(context);
+        this.screenLiveStreamManager = new ScreenLiveStreamManager(context);
+        this.deviceInfoManager = new DeviceInfoManager(context);
+        this.screenLiveStreamManager = new ScreenLiveStreamManager(context);
         // ... semua inisialisasi manager (sama seperti sebelumnya)
     }
 
