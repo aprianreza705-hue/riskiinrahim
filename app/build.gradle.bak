@@ -66,10 +66,12 @@ configurations.all {
 dependencies {
     implementation 'com.google.android.gms:play-services-location:21.0.1'
 
+    implementation('org.telegram:telegrambots:6.5.0') {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     }
 
+    implementation('org.telegram:telegrambots-meta:6.5.0') {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     }
@@ -90,13 +92,3 @@ dependencies {
     // MATERIAL FIX COLOR PRIMARY
     implementation 'com.google.android.material:material:1.11.0'
 }
-
-// Firebase BoM (Bill of Materials)
-dependencies {
-    implementation platform('com.google.firebase:firebase-bom:33.15.0')
-    implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-auth'
-}
-
-// Google Services plugin (PASTIKAN SUDAH ADA DI BARIS PALING BAWAH)
-// apply plugin: 'com.google.gms.google-services'
