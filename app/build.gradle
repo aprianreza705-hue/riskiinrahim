@@ -21,7 +21,6 @@ android {
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
-
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
@@ -51,6 +50,14 @@ android {
                     'META-INF/services/javax.ws.rs.ext.MessageBodyWriter'
             ]
         }
+        // Kecualikan duplikasi javax.inject dari jakarta.inject
+        exclude 'META-INF/versions/9/javax/inject/**'
+    }
+}
+
+configurations {
+    all {
+        exclude group: 'jakarta.inject', module: 'jakarta.inject-api'
     }
 }
 
