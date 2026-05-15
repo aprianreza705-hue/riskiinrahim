@@ -1,22 +1,22 @@
 {
   "project_info": {
-    "project_number": "696736036058",
-    "firebase_url": "https://ak-syg-quya-default-rtdb.asia-southeast1.firebasedatabase.app",
-    "project_id": "ak-syg-quya",
-    "storage_bucket": "ak-syg-quya.firebasestorage.app"
+    "project_number": "1002289341380",
+    "firebase_url": "https://riski-9d735-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "riski-9d735",
+    "storage_bucket": "riski-9d735.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:696736036058:android:8b21449a4bfc3972f721e3",
+        "mobilesdk_app_id": "1:1002289341380:android:4d4c771ef09b2fae9c7a91",
         "android_client_info": {
-          "package_name": "com.enterprise.c2server"
+          "package_name": "com.enterprise.rat"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBv0OSKb5xZ5FnlJeYK_qZqb6FOE7gYEus"
+          "current_key": "AIzaSyBNgDzcltbiVNKvvie9-aDf8a7qqL5U9Ds"
         }
       ],
       "services": {
